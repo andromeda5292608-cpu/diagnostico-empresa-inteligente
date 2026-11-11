@@ -12,7 +12,7 @@
   ];
   var PROF_PALABRAS = /\b(medico|medica|doctora?|dra?)\b/;
   var SALUD = /psicolog|terapeut|nutricion|fisioterap|\b(medico|medica|doctora?|dra?)\b|odont/;
-  var IDEA_RE = /\b(idea|ideas)\b|por iniciar|por arrancar|quiero emprender|quiero montar|quiero empezar|quiero arrancar|quiero poner|quiero iniciar|todavia no (empiezo|inicio|he empezado|he iniciado)|aun no (empiezo|inicio|he empezado|he iniciado)|no he (empezado|iniciado|arrancado)|solo una idea|tengo una idea|es una idea|aun no existe|todavia no existe/;
+  var IDEA_RE = /\b(idea|ideas|proyecto|proyectos)\b|por iniciar|por arrancar|quiero emprender|quiero montar|quiero empezar|quiero arrancar|quiero poner|quiero iniciar|todavia no (empiezo|inicio|he empezado|he iniciado)|aun no (empiezo|inicio|he empezado|he iniciado)|no he (empezado|iniciado|arrancado)|solo una idea|tengo una idea|es una idea|aun no existe|todavia no existe/;
   var EMP_STEMS = [
     'emprendimiento', 'emprendedor', 'emprendedora', 'independiente', 'freelance',
     'manicur', 'pedicur', 'maquillaj', 'pestan', 'artesani', 'catalogo',

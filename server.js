@@ -204,10 +204,10 @@ function validar(b) {
     whatsapp: normalizarTel(b.whatsapp), redes: clip(b.redes, 500), canal: clip(b.canal, 20), mensajes: clip(b.mensajes, 10),
     pauta: clip(b.pauta, 20), problema: clip(b.problema, 20), meta: clip(b.meta, 20),
   };
-  if (d.negocio.length < 2) errores.negocio = 'Escriba el nombre del negocio, de su emprendimiento o de su idea.';
-  if (!TIPOS[d.tipo]) errores.tipo = 'Elija el tipo de negocio, profesión o idea.';
+  if (d.negocio.length < 2) errores.negocio = 'Escriba el nombre del negocio.';
+  if (!TIPOS[d.tipo]) errores.tipo = 'Elija el tipo de negocio.';
   if (d.tipo === 'otro') {
-    if (d.tipoOtro.length < 2) errores.tipoOtro = 'Escriba qué tipo de negocio, emprendimiento o idea tiene.';
+    if (d.tipoOtro.length < 2) errores.tipoOtro = 'Escriba qué tipo de negocio tiene.';
   } else {
     d.tipoOtro = '';
   }

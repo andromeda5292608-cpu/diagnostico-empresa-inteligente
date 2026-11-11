@@ -2,7 +2,7 @@
   'use strict';
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var form = $('#form'), paso = 1, TOTAL = 3, id = null, snap = null;
-  var titulos = ['Su negocio, emprendimiento o idea', 'Su contacto', 'Sus ventas'];
+  var titulos = ['Su negocio', 'Su contacto', 'Sus ventas'];
 
   function mostrarPaso() {
     document.querySelectorAll('fieldset[data-paso]').forEach(function (f) { f.hidden = +f.dataset.paso !== paso; });
@@ -114,7 +114,7 @@
           chip('tipo', prefijoTipo() + otro);
         } else {
           var c = RM.tipo && RM.tipo.otro;
-          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio, emprendimiento o idea tiene y lo armamos a su medida.' });
+          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio tiene y lo armamos a su medida.' });
           chip('tipo', '');
         }
         actualizarSabemos();

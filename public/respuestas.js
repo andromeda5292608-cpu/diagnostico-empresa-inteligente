@@ -8,7 +8,7 @@
       estetica: { chip: 'Estética / salud', why: 'en estética y salud se compra por confianza: quien ve casos reales y reseñas, agenda.', fix: 'contenido profesional con video IA y reseñas visibles, para que lo elijan a usted antes de la cita.' },
       celulares: { chip: 'Celulares / tecnología', why: 'el cliente de tecnología pregunta a varios locales a la vez y compra donde le responden primero.', fix: 'respuestas rápidas y claras, y contenido en video que muestre que su local tiene movimiento.' },
       restaurante: { chip: 'Restaurante / comida', why: 'en comida la gente decide en segundos mirando video y fotos: el antojo entra por los ojos.', fix: 'videos profesionales de sus platos con IA y pauta en Meta dirigida a quienes están cerca.' },
-      otro: { chip: 'Su tipo de negocio, emprendimiento o idea', say: 'Cuéntenos qué tipo de negocio, emprendimiento o idea tiene y lo armamos a su medida.' }
+      otro: { chip: 'Su tipo de negocio', say: 'Cuéntenos qué tipo de negocio tiene y lo armamos a su medida.' }
     },
     canal: {
       referidos: { chip: 'Clientes por recomendación', why: 'las recomendaciones son oro, pero no se pueden encender cuando uno quiere.', fix: 'contenido profesional que multiplique esas recomendaciones y una pauta en Meta pequeña para tener clientes nuevos a voluntad.' },
@@ -99,7 +99,7 @@
     tipoOtro: function (v) { return { say: 'Perfecto, ' + v + '. Armamos el plan a la medida de su profesión, para ayudarle a extender sus servicios, no con un paquete genérico.' }; }
   };
   // El de «Otro» antes de escribir: también cubre profesión, sin añadir opciones a la lista.
-  R.tipo.otro = { chip: 'Su tipo de negocio, emprendimiento o idea', say: 'Cuéntenos qué tipo de negocio, emprendimiento o idea tiene y lo armamos a su medida.' };
+  R.tipo.otro = { chip: 'Su tipo de negocio', say: 'Cuéntenos qué tipo de negocio tiene y lo armamos a su medida.' };
   var R_EMP = {
     canal: {
       referidos: { chip: 'Clientes por recomendación', why: 'las recomendaciones ayudan, pero no se pueden encender cuando uno quiere llenar la agenda.', fix: 'una marca personal visible y una pauta en Meta pequeña, para conseguir más clientes a voluntad.' },

@@ -17,7 +17,7 @@ const TIPOS = {
   estetica: 'Estética / salud',
   celulares: 'Celulares / tecnología',
   restaurante: 'Restaurante / comida',
-  otro: 'Otro / emprendimiento / idea',
+  otro: 'Otro tipo de negocio',
 };
 const CANALES = {
   referidos: 'Recomendaciones y boca a boca',
