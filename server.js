@@ -174,13 +174,14 @@ function notaEnvio(r, diag) {
   ].join('\n');
 }
 function notaPropuesta(r) {
-  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + '\nLlamada preferida: ' + r.dia + ', ' + r.franja + (r.nota ? '\nNota del cliente: ' + r.nota : '');
+  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + '\nLlamada preferida: ' + r.dia + ', ' + r.franja + '\nPrefiere: propuesta PDF por WhatsApp + llamada' + (r.nota ? '\nNota del cliente: ' + r.nota : '');
 }
 function notaTarea(r) {
   const probs = Array.isArray(r.problemas) ? r.problemas.filter(Boolean).join('; ') : '';
   return [
     'Teléfono: +57 ' + (r.whatsapp || ''),
     'Llamada preferida: ' + r.dia + ', ' + r.franja,
+    'Prefiere: propuesta PDF por WhatsApp + llamada',
     'Nivel del diagnóstico: ' + (r.nivel || 'no disponible'),
     'Problemas detectados: ' + (probs || 'no disponible'),
     r.nota ? 'Nota del cliente: ' + r.nota : '',

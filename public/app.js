@@ -213,9 +213,9 @@
     try {
       var r = await fetch('/api/propuesta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o) });
       var j = await r.json();
-      if (!r.ok || !j.ok) { m.textContent = j.error || 'No pudimos enviar su solicitud.'; b.disabled = false; b.textContent = 'Quiero mi propuesta'; return; }
+      if (!r.ok || !j.ok) { m.textContent = j.error || 'No pudimos enviar su solicitud.'; b.disabled = false; b.textContent = 'Quiero mi propuesta por WhatsApp'; return; }
       fp.hidden = true; $('#ok-prop').hidden = false;
-    } catch (err) { m.textContent = 'Sin conexión. Intente de nuevo.'; b.disabled = false; b.textContent = 'Quiero mi propuesta'; }
+    } catch (err) { m.textContent = 'Sin conexión. Intente de nuevo.'; b.disabled = false; b.textContent = 'Quiero mi propuesta por WhatsApp'; }
   });
   mostrarPaso(); actualizarAvance();
 })();

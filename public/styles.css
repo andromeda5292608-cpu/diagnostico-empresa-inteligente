@@ -71,6 +71,7 @@ input:focus,select:focus{outline:none;border-color:var(--az2);box-shadow:0 0 0 3
 .aviso{margin:22px 0 0;padding-top:12px;border-top:1px solid #d3dbec;color:#4a5b82;font-size:12.5px}
 .cierre h2{margin-bottom:6px}
 .cierre p{color:#dbe5ff;margin:0 0 16px}
+.ayuda-prop{margin:10px 0 0!important;text-align:center;font-size:13px;color:var(--mut)!important}
 .ok{background:rgba(0,194,255,.12);border:1px solid var(--az2);padding:14px;border-radius:12px;color:#fff!important;font-weight:600}
 .pie{border-top:1px solid var(--line);padding:18px 0 28px;color:var(--mut);font-size:13px}
 .pie .wrap{display:flex;gap:10px;align-items:center}

@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=4">
+<link rel="stylesheet" href="/styles.css?v=5">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -146,7 +146,7 @@
         <h3 id="r-plan-t"></h3>
         <ol id="r-plan-l" class="plan-l"></ol>
         <p class="plan-c" id="r-plan-c"></p>
-        <a class="btn no-print" href="#cierre" id="r-plan-cta">Quiero mi propuesta</a>
+        <a class="btn no-print" href="#cierre" id="r-plan-cta">Quiero mi propuesta por WhatsApp</a>
       </section>
       <h3>Lo que está frenando sus ventas</h3>
       <ol id="r-problemas" class="lista"></ol>
@@ -167,7 +167,7 @@
 
     <section class="card cierre no-print" id="cierre">
       <h2>Le proponemos la mejor solución para que su negocio crezca</h2>
-      <p>Este diagnóstico es el primer paso. En una <b>llamada corta</b> le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Sin compromiso. Elija cuándo le queda mejor.</p>
+      <p>Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.</p>
       <form id="form-prop" novalidate>
         <label>Día
           <select name="dia" required>
@@ -186,18 +186,19 @@
           <input name="nota" type="text" maxlength="200"></label>
         <div class="trampa" aria-hidden="true"><label>No llenar<input name="sitio" tabindex="-1" autocomplete="off"></label></div>
         <p class="msg" id="msg-prop" role="alert"></p>
-        <button type="submit" class="btn" id="btn-prop">Quiero mi propuesta</button>
+        <button type="submit" class="btn" id="btn-prop">Quiero mi propuesta por WhatsApp</button>
+        <p class="hint ayuda-prop">Le enviamos su propuesta en PDF por WhatsApp y le llamamos para explicársela.</p>
       </form>
-      <p class="ok" id="ok-prop" hidden>Listo. Recibimos su solicitud. Lo llamaremos en la franja que eligió para explicarle su propuesta a la medida.</p>
+      <p class="ok" id="ok-prop" hidden>Listo. Recibimos su solicitud. Le enviaremos su propuesta en PDF por WhatsApp y lo llamaremos en la franja que eligió para explicársela.</p>
     </section>
   </div>
 </section>
 </main>
-<a class="btn sticky no-print" href="#cierre" id="sticky" hidden>Quiero mi propuesta</a>
+<a class="btn sticky no-print" href="#cierre" id="sticky" hidden>Quiero mi propuesta por WhatsApp</a>
 <div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/respuestas.js?v=4"></script>
-<script src="/app.js?v=4"></script>
+<script src="/respuestas.js?v=5"></script>
+<script src="/app.js?v=5"></script>
 </body>
 </html>
