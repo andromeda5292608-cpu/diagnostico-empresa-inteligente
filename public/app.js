@@ -38,13 +38,15 @@
   function pintar(d) {
     $('#r-fecha').textContent = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
     $('#r-negocio').textContent = d.negocio + ' · ' + d.tipo + ' · ' + d.ciudad;
+    var ap = $('#r-apertura');
+    if (ap) ap.textContent = d.apertura || '';
     $('#r-nivel').textContent = d.nivel; $('#r-nivel-txt').textContent = d.nivelTxt;
     var p = $('#r-perfil'); p.innerHTML = '';
     Object.keys(d.perfil).forEach(function (k) { var x = document.createElement('div'); x.innerHTML = '<dt>' + t(k) + '</dt><dd>' + t(d.perfil[k]) + '</dd>'; p.appendChild(x); });
     var ul = $('#r-problemas'); ul.innerHTML = '';
     d.problemas.forEach(function (x) { ul.appendChild(li('<b>' + t(x.titulo) + '</b><span>' + t(x.detalle) + '</span>')); });
-    [['#r-oport', d.oportunidades], ['#r-costo', d.costo], ['#r-sig', d.siguientes]].forEach(function (a) {
-      var el = $(a[0]); el.innerHTML = ''; a[1].forEach(function (s) { el.appendChild(li(t(s))); });
+    [['#r-ganar', d.ganancia || []], ['#r-oport', d.oportunidades], ['#r-costo', d.costo], ['#r-sig', d.siguientes]].forEach(function (a) {
+      var el = $(a[0]); if (!el) return; el.innerHTML = ''; (a[1] || []).forEach(function (s) { el.appendChild(li(t(s))); });
     });
   }
   function irResultado() {

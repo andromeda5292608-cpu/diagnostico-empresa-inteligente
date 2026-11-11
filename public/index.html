@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Diagnóstico gratis · Empresa Inteligente</title>
-<meta name="description" content="Diagnóstico gratis: le decimos qué frena sus ventas. Responda unas preguntas cortas y reciba su diagnóstico al instante.">
+<meta name="description" content="Diagnóstico gratis de Empresa Inteligente: sepa qué frena su negocio hoy y lo que un plan a la medida puede desbloquear. Responda unas preguntas y reciba su diagnóstico al instante.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
@@ -21,13 +21,13 @@
 <section id="vista-form">
   <div class="hero"><div class="wrap">
     <p class="kicker">Gratis · Toma 2 minutos</p>
-    <h1>Diagnóstico gratis: <span class="grad">te decimos qué frena tus ventas</span></h1>
-    <p class="lead">Responda unas preguntas cortas sobre su negocio y reciba al instante un diagnóstico claro: qué le está frenando, qué oportunidades tiene y qué le cuesta no actuar.</p>
+    <h1>Diagnóstico gratis: <span class="grad">lo que su negocio necesita para crecer</span></h1>
+    <p class="lead">En Empresa Inteligente hacemos un diagnóstico de lo que su negocio necesita exactamente para crecer. En dos minutos, con sus propias respuestas, va a ver qué le está frenando hoy, lo que está dejando de ganar y cómo un plan a la medida le puede ayudar a vender más, ahorrar tiempo, ganar más plata y tener más libertad.</p>
     <a class="btn" href="#form" id="empezar">Empezar mi diagnóstico</a>
     <ul class="pts">
       <li>Sin costo y sin compromiso</li>
-      <li>Resultado en pantalla, listo para guardar en PDF</li>
-      <li>Hecho a partir de sus propias respuestas</li>
+      <li>Resultado al instante, listo para guardar en PDF</li>
+      <li>Hecho a partir de lo que usted nos cuenta</li>
     </ul>
   </div></div>
 
@@ -127,20 +127,23 @@
     <article class="doc" id="doc">
       <div class="doc-head">
         <img src="/logo-ei.png" width="72" height="72" alt="Empresa Inteligente">
-        <div><p class="kicker" id="r-fecha"></p><h2>Diagnóstico preliminar</h2><p class="neg" id="r-negocio"></p></div>
+        <div><p class="kicker" id="r-fecha"></p><h2>Diagnóstico de su negocio</h2><p class="neg" id="r-negocio"></p></div>
       </div>
+      <p class="apertura" id="r-apertura"></p>
       <div class="nivel"><span class="etq">Nivel de su estrategia comercial</span><strong id="r-nivel"></strong><p id="r-nivel-txt"></p></div>
       <h3>Su situación según sus respuestas</h3>
       <dl id="r-perfil" class="perfil"></dl>
       <h3>Lo que está frenando sus ventas</h3>
       <ol id="r-problemas" class="lista"></ol>
+      <h3>Lo que podría ganar con un plan a la medida</h3>
+      <ul id="r-ganar" class="lista pts2 ganar"></ul>
       <h3>Oportunidades que vemos</h3>
       <ul id="r-oport" class="lista pts2"></ul>
-      <h3>El costo de no actuar</h3>
+      <h3>El costo de seguir igual</h3>
       <ul id="r-costo" class="lista pts2"></ul>
-      <h3>Por dónde empezar</h3>
+      <h3>El siguiente paso</h3>
       <ul id="r-sig" class="lista pts2"></ul>
-      <p class="aviso">Diagnóstico preliminar generado automáticamente a partir de las respuestas del formulario. El análisis completo revisa sus redes, su ficha de Google y su atención al detalle, y se explica en la llamada.</p>
+      <p class="aviso">Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su negocio.</p>
     </article>
 
     <div class="acciones no-print">
@@ -148,8 +151,8 @@
     </div>
 
     <section class="card cierre no-print" id="cierre">
-      <h2>¿Quiere que le armemos una propuesta?</h2>
-      <p>Le explicamos su diagnóstico y una propuesta a su medida en una <b>llamada telefónica</b>. Elija cuándo le queda mejor.</p>
+      <h2>¿Quiere ver su plan a la medida?</h2>
+      <p>Este diagnóstico es el primer paso. En una <b>llamada corta</b> le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Sin compromiso. Elija cuándo le queda mejor.</p>
       <form id="form-prop" novalidate>
         <label>Día
           <select name="dia" required>
@@ -170,7 +173,7 @@
         <p class="msg" id="msg-prop" role="alert"></p>
         <button type="submit" class="btn" id="btn-prop">Quiero mi propuesta</button>
       </form>
-      <p class="ok" id="ok-prop" hidden>Listo. Recibimos su solicitud y lo llamaremos en la franja que eligió.</p>
+      <p class="ok" id="ok-prop" hidden>Listo. Recibimos su solicitud. Lo llamaremos en la franja que eligió para explicarle su propuesta a la medida.</p>
     </section>
   </div>
 </section>
