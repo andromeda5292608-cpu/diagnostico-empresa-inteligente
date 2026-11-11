@@ -77,17 +77,43 @@ async function notificar(texto) {
     await fetch(NOTIFY_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: texto, content: texto }), signal: AbortSignal.timeout(6000) });
   } catch (e) { console.error('Notificación falló', e.message); }
 }
-async function highlevel(reg, tag) {
-  if (!HL_API_KEY) return;
+async function hl(pathname, method, body) {
+  const r = await fetch('https://services.leadconnectorhq.com' + pathname, {
+    method,
+    headers: { Authorization: 'Bearer ' + HL_API_KEY, Version: '2021-07-28', 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
+  });
+  const txt = await r.text();
+  if (!r.ok) throw new Error(method + ' ' + pathname.replace(/[0-9a-zA-Z]{20}/g, ':id') + ' -> HTTP ' + r.status);
+  try { return JSON.parse(txt); } catch { return {}; }
+}
+// HighLevel es el registro permanente: contacto + etiqueta + nota con lo esencial.
+async function highlevel(reg, tag, nota) {
+  if (!HL_API_KEY || !reg.whatsapp) return;
   try {
-    const r = await fetch('https://services.leadconnectorhq.com/contacts/upsert', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + HL_API_KEY, Version: '2021-07-28', 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ locationId: HL_LOCATION_ID, name: reg.contacto, companyName: reg.negocio, phone: reg.whatsapp, city: reg.ciudad, source: 'Diagnóstico web', tags: [tag] }),
-      signal: AbortSignal.timeout(8000),
+    const up = await hl('/contacts/upsert', 'POST', {
+      locationId: HL_LOCATION_ID, name: reg.contacto, companyName: reg.negocio, phone: '+57' + reg.whatsapp, city: reg.ciudad, country: 'CO', source: 'Diagnóstico web',
     });
-    if (!r.ok) console.error('HighLevel respondió', r.status);
-  } catch (e) { console.error('HighLevel falló', e.message); }
+    const cid = (up.contact && up.contact.id) || up.id;
+    if (!cid) throw new Error('upsert sin id');
+    await hl('/contacts/' + cid + '/tags', 'POST', { tags: [tag] });
+    await hl('/contacts/' + cid + '/notes', 'POST', { body: nota });
+  } catch (e) { console.error('HighLevel falló:', e.message); }
+}
+function notaEnvio(r, diag) {
+  return [
+    'DIAGNÓSTICO WEB (' + r.fecha + ')',
+    'Negocio: ' + r.negocio, 'Tipo: ' + (TIPOS[r.tipo] || r.tipo), 'Ciudad: ' + r.ciudad,
+    'Contacto: ' + r.contacto, 'WhatsApp: ' + r.whatsapp, 'Instagram/Facebook/web: ' + (r.redes || 'no indicó'),
+    'Cómo consigue clientes: ' + (CANALES[r.canal] || ''), 'Mensajes por día: ' + ((MENSAJES[r.mensajes] || {}).label || ''),
+    'Pauta: ' + (PAUTA[r.pauta] || ''), 'Problema principal: ' + (PROBLEMAS[r.problema] || ''), 'Meta: ' + (METAS[r.meta] || ''),
+    'Nivel del diagnóstico: ' + diag.nivel,
+    'Problemas detectados: ' + diag.problemas.map((p) => p.titulo).join('; '),
+  ].join('\n');
+}
+function notaPropuesta(r) {
+  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + '\nLlamada preferida: ' + r.dia + ', ' + r.franja + (r.nota ? '\nNota del cliente: ' + r.nota : '');
 }
 
 // --- Validación ---
@@ -130,7 +156,7 @@ async function apiDiagnostico(req, res) {
   const reg = { tipo_registro: 'envio', id: crypto.randomBytes(6).toString('hex'), fecha: new Date().toISOString(), ...d, nivel: diag.nivel, problemas: diag.problemas.map((p) => p.titulo) };
   guardar(reg);
   notificar('Nuevo diagnóstico web: ' + reg.negocio + ' (' + reg.ciudad + ') - ' + reg.contacto + ' ' + reg.whatsapp);
-  highlevel(reg, 'diagnostico-web');
+  highlevel(reg, 'diagnostico-web', notaEnvio(reg, diag));
   json(res, 200, { ok: true, id: reg.id, diagnostico: diag });
 }
 async function apiPropuesta(req, res) {
@@ -149,7 +175,7 @@ async function apiPropuesta(req, res) {
   };
   guardar(reg);
   notificar('QUIERE PROPUESTA: ' + reg.negocio + ' - ' + reg.contacto + ' ' + reg.whatsapp + ' - llamada ' + reg.dia + ', ' + reg.franja);
-  highlevel(reg, 'quiere-propuesta');
+  highlevel(reg, 'quiere-propuesta', notaPropuesta(reg));
   json(res, 200, { ok: true });
 }
 
