@@ -38,6 +38,7 @@ input:focus,select:focus{outline:none;border-color:var(--az2);box-shadow:0 0 0 3
 .err,.msg{color:#ff9a9a;font-size:13px;display:block;min-height:0;margin-top:4px;font-weight:400}
 .msg{margin:4px 0 12px}
 .hint{color:var(--mut);font-size:12px;font-weight:400}
+.opcional{color:var(--mut);font-weight:400;font-size:12px;text-transform:none;letter-spacing:0}
 .acciones{display:flex;gap:10px;margin-top:6px}
 .acciones .btn{flex:1}
 .acciones .btn[hidden]{display:none}

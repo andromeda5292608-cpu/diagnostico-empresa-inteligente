@@ -46,12 +46,14 @@ const METAS = {
 function tieneRedes(texto) {
   const t = String(texto || '').toLowerCase().trim();
   if (!t || (/^(no|ninguna?|nada|n\/a|no tengo|no tiene)\b/.test(t) && t.length < 25))
-    return { instagram: false, facebook: false, web: false, ninguna: true };
+    return { instagram: false, facebook: false, web: false, maps: false, ninguna: true };
   const instagram = /instagram|(^|\s)@[a-z0-9._]{2,}|\big[: ]/.test(t);
   const facebook = /facebook|fb\.com|\bfb[: ]/.test(t);
+  const maps = /google\.com\/maps|maps\.google|maps\.app\.goo\.gl|goo\.gl\/maps|\bg\.page\//.test(t);
   const sinSociales = t.replace(/(instagram|facebook|fb)\.com\/?\S*/g, ' ');
-  const web = /(https?:\/\/|www\.)/.test(sinSociales) || /\b[a-z0-9-]{2,}\.(com|co|net|org|shop|store|site|app)\b/.test(sinSociales);
-  return { instagram, facebook, web, ninguna: !(instagram || facebook || web) };
+  const sinMaps = sinSociales.replace(/https?:\/\/\S*(maps\.google|google\.com\/maps|maps\.app\.goo\.gl|goo\.gl\/maps|g\.page)\S*/g, ' ');
+  const web = /(https?:\/\/|www\.)/.test(sinMaps) || /\b[a-z0-9-]{2,}\.(com|co|net|org|shop|store|site|app)\b/.test(sinMaps);
+  return { instagram, facebook, web, maps, ninguna: !(instagram || facebook || web || maps) };
 }
 
 // Piezas específicas por tipo de negocio
@@ -114,16 +116,16 @@ function diagnosticar(d) {
   let puntos = 0; // 0..N, solo para clasificar el nivel; no se muestra como cifra
 
   // 1. Presencia digital
-  const nRedes = [redes.instagram, redes.facebook, redes.web].filter(Boolean).length;
+  const nRedes = [redes.instagram, redes.facebook, redes.web, redes.maps].filter(Boolean).length;
   if (redes.ninguna || nRedes === 0) {
     problemas.push({
       titulo: 'Presencia digital casi invisible',
-      detalle: 'No indicó ningún perfil de Instagram, Facebook ni página web. Hoy un cliente nuevo que lo busca en internet no encuentra dónde confiar, y esa venta se la lleva quien sí aparece.',
+      detalle: 'No indicó Instagram, Facebook, Google Maps ni página web. Hoy un cliente nuevo que lo busca en internet no encuentra dónde confiar, y esa venta se la lleva quien sí aparece.',
     });
   } else if (nRedes === 1) {
     problemas.push({
       titulo: 'Presencia digital en un solo lugar',
-      detalle: 'Solo indicó un canal (' + [redes.instagram && 'Instagram', redes.facebook && 'Facebook', redes.web && 'página web'].filter(Boolean).join('') + '). Quien lo busca en otro sitio no lo encuentra, y no hay a dónde llevar al cliente que llega por recomendación.',
+      detalle: 'Solo indicó un canal (' + [redes.instagram && 'Instagram', redes.facebook && 'Facebook', redes.maps && 'Google Maps', redes.web && 'página web'].filter(Boolean).join('') + '). Quien lo busca en otro sitio no lo encuentra, y no hay a dónde llevar al cliente que llega por recomendación.',
     });
     puntos += 1;
   } else {
