@@ -81,15 +81,70 @@ async function hl(pathname, method, body) {
   const r = await fetch('https://services.leadconnectorhq.com' + pathname, {
     method,
     headers: { Authorization: 'Bearer ' + HL_API_KEY, Version: '2021-07-28', 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body),
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal: AbortSignal.timeout(10000),
   });
   const txt = await r.text();
-  if (!r.ok) throw new Error(method + ' ' + pathname.replace(/[0-9a-zA-Z]{20}/g, ':id') + ' -> HTTP ' + r.status);
+  if (!r.ok) {
+    let extra = '';
+    try {
+      const j = JSON.parse(txt);
+      const msg = j.message || j.error || j.detail || '';
+      extra = ' ' + (Array.isArray(msg) ? msg.join('; ') : String(msg)).slice(0, 240);
+    } catch { extra = ' ' + String(txt).replace(/\s+/g, ' ').slice(0, 240); }
+    throw new Error(method + ' ' + pathname.replace(/[0-9a-zA-Z]{20}/g, ':id') + ' -> HTTP ' + r.status + extra);
+  }
   try { return JSON.parse(txt); } catch { return {}; }
 }
+// Un usuario de la subcuenta, en memoria, para asignar las tareas de llamada.
+let hlUsuarioId;
+let hlUsuarioEtiqueta = '';
+async function hlAsignado() {
+  if (hlUsuarioId !== undefined) return hlUsuarioId;
+  try {
+    const data = await hl('/users/?locationId=' + encodeURIComponent(HL_LOCATION_ID), 'GET');
+    const users = Array.isArray(data.users) ? data.users : [];
+    let pick = null;
+    if (users.length === 1) pick = users[0];
+    else {
+      const admins = users.filter((u) => (u.roles && u.roles.role === 'admin') || u.role === 'admin');
+      if (admins.length === 1) pick = admins[0];
+      else console.error('HighLevel: no hay un usuario único o un admin claro (' + users.length + ' usuarios); la tarea queda sin asignar');
+    }
+    hlUsuarioId = (pick && pick.id) || null;
+    if (pick) {
+      hlUsuarioEtiqueta = [pick.name, pick.email, pick.id].filter(Boolean).join(' · ');
+      console.log('HighLevel tareas asignadas a ' + hlUsuarioEtiqueta);
+    } else hlUsuarioId = null;
+  } catch (e) {
+    console.error('HighLevel no se pudieron listar usuarios:', e.message);
+    hlUsuarioId = null;
+  }
+  return hlUsuarioId;
+}
+// Próxima ocurrencia de la franja en hora de Colombia (UTC-5, sin horario de verano).
+function proximaDue(diaKey, franjaKey, now = new Date()) {
+  const startH = { manana: 8, tarde: 12, noche: 18 }[franjaKey] || 12;
+  const endH = { manana: 12, tarde: 18, noche: 20 }[franjaKey] || 18;
+  const at = (y, mo, d, h, min) => new Date(Date.UTC(y, mo, d, h + 5, min, 0));
+  const wall = (dt) => {
+    const t = new Date(dt.getTime() - 5 * 3600e3);
+    return { y: t.getUTCFullYear(), mo: t.getUTCMonth(), d: t.getUTCDate(), dow: t.getUTCDay() };
+  };
+  const dayOk = (dow) => (diaKey === 'sabado' ? dow === 6 : dow >= 1 && dow <= 5);
+  const w = wall(now);
+  for (let i = 0; i <= 8; i++) {
+    const p = wall(at(w.y, w.mo, w.d + i, 12, 0));
+    if (!dayOk(p.dow)) continue;
+    const start = at(p.y, p.mo, p.d, startH, 0);
+    const end = at(p.y, p.mo, p.d, endH, 0);
+    if (now < start) return start;
+    if (now < end) return new Date(Math.min(now.getTime() + 5 * 60e3, end.getTime()));
+  }
+  return at(w.y, w.mo, w.d + 7, startH, 0);
+}
 // HighLevel es el registro permanente: contacto + etiqueta + nota con lo esencial.
-async function highlevel(reg, tag, nota) {
+async function highlevel(reg, tag, nota, tarea) {
   if (!HL_API_KEY || !reg.whatsapp) return;
   try {
     const up = await hl('/contacts/upsert', 'POST', {
@@ -99,6 +154,12 @@ async function highlevel(reg, tag, nota) {
     if (!cid) throw new Error('upsert sin id');
     await hl('/contacts/' + cid + '/tags', 'POST', { tags: [tag] });
     await hl('/contacts/' + cid + '/notes', 'POST', { body: nota });
+    if (tarea) {
+      const payload = { title: tarea.title, body: tarea.body, dueDate: tarea.dueDate, completed: false };
+      const assignedTo = await hlAsignado();
+      if (assignedTo) payload.assignedTo = assignedTo;
+      await hl('/contacts/' + cid + '/tasks', 'POST', payload);
+    }
   } catch (e) { console.error('HighLevel falló:', e.message); }
 }
 function notaEnvio(r, diag) {
@@ -114,6 +175,16 @@ function notaEnvio(r, diag) {
 }
 function notaPropuesta(r) {
   return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + '\nLlamada preferida: ' + r.dia + ', ' + r.franja + (r.nota ? '\nNota del cliente: ' + r.nota : '');
+}
+function notaTarea(r) {
+  const probs = Array.isArray(r.problemas) ? r.problemas.filter(Boolean).join('; ') : '';
+  return [
+    'Teléfono: +57 ' + (r.whatsapp || ''),
+    'Llamada preferida: ' + r.dia + ', ' + r.franja,
+    'Nivel del diagnóstico: ' + (r.nivel || 'no disponible'),
+    'Problemas detectados: ' + (probs || 'no disponible'),
+    r.nota ? 'Nota del cliente: ' + r.nota : '',
+  ].filter(Boolean).join('\n');
 }
 
 // --- Validación ---
@@ -172,10 +243,15 @@ async function apiPropuesta(req, res) {
     tipo_registro: 'propuesta', id: crypto.randomBytes(6).toString('hex'), envio_id: id, fecha: new Date().toISOString(),
     negocio: base.negocio, contacto: base.contacto, whatsapp: base.whatsapp, ciudad: base.ciudad,
     dia: DIAS[dia], franja: FRANJAS[franja], nota: clip(b.nota, 200),
+    nivel: base.nivel, problemas: Array.isArray(base.problemas) ? base.problemas : [],
   };
   guardar(reg);
   notificar('QUIERE PROPUESTA: ' + reg.negocio + ' - ' + reg.contacto + ' ' + reg.whatsapp + ' - llamada ' + reg.dia + ', ' + reg.franja);
-  highlevel(reg, 'quiere-propuesta', notaPropuesta(reg));
+  highlevel(reg, 'quiere-propuesta', notaPropuesta(reg), {
+    title: 'Llamar a ' + (reg.contacto || 'cliente') + ' (' + (reg.negocio || 'negocio') + ') – propuesta',
+    body: notaTarea(reg),
+    dueDate: proximaDue(dia, franja).toISOString(),
+  });
   json(res, 200, { ok: true });
 }
 
