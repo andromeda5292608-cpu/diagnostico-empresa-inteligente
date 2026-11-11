@@ -13,6 +13,59 @@
     $('#legal').hidden = paso !== TOTAL;
     $('#msg-form').textContent = '';
   }
+  // --- Avance, "lo que ya sabemos" y micro-respuestas ---
+  var REQ = ['negocio', 'tipo', 'ciudad', 'contacto', 'whatsapp', 'canal', 'mensajes', 'pauta', 'problema', 'meta'];
+  var RM = (window.EI_RESP && window.EI_RESP.R) || {}, TX = (window.EI_RESP && window.EI_RESP.TEXTO) || {};
+  var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var tokens = {};
+  function valor(n) { var el = form.elements[n]; return el ? String(el.value || '').trim() : ''; }
+  function actualizarAvance() {
+    var n = REQ.filter(function (k) { return valor(k); }).length, pct = Math.round(n * 100 / REQ.length);
+    $('#prog-bar').style.width = pct + '%'; $('#prog-pct').textContent = pct + ' %';
+    $('.prog').setAttribute('aria-valuenow', pct);
+  }
+  function chip(n, texto) {
+    var box = $('#chips'), c = box.querySelector('[data-c="' + n + '"]');
+    if (!texto) { if (c) c.remove(); $('#sabemos').hidden = !box.children.length; return; }
+    if (!c) { c = document.createElement('span'); c.dataset.c = n; box.appendChild(c); }
+    c.textContent = texto; c.className = 'chip'; void c.offsetWidth; c.className = 'chip nuevo';
+    $('#sabemos').hidden = false;
+  }
+  function quitarRespuesta(n) { var r = form.querySelector('.reply[data-r="' + n + '"]'); if (r) r.remove(); }
+  function responder(n, contenido) {
+    tokens[n] = (tokens[n] || 0) + 1; var tk = tokens[n];
+    var lab = form.elements[n].closest('label'); if (!lab) return;
+    quitarRespuesta(n);
+    if (!contenido) return;
+    var r = document.createElement('div'); r.className = 'reply'; r.dataset.r = n; r.setAttribute('role', 'status');
+    r.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+    lab.insertAdjacentElement('afterend', r);
+    setTimeout(function () {
+      if (tokens[n] !== tk || !r.parentNode) return;
+      var h = '';
+      if (contenido.say) h = '<p>' + t(contenido.say) + '</p>';
+      else h = '<p><b>' + (n === 'problema' ? 'Esto puede pasar porque' : 'Lo que vemos:') + '</b> ' + t(contenido.why) + '</p><p><b>Lo que necesita:</b> ' + t(contenido.fix) + '</p>';
+      r.className = 'reply listo'; r.innerHTML = h;
+      var b = r.getBoundingClientRect();
+      if (b.bottom > window.innerHeight - 8) window.scrollBy({ top: b.bottom - window.innerHeight + 90, behavior: reducir ? 'auto' : 'smooth' });
+    }, reducir ? 0 : 600);
+  }
+  function alCambiar(e) {
+    var el = e.target, n = el.name; if (!n || n === 'sitio') return;
+    actualizarAvance();
+    var v = valor(n);
+    if (RM[n]) {
+      var c = RM[n][v];
+      responder(n, c || null); chip(n, c ? c.chip : '');
+    } else if (TX[n]) {
+      responder(n, v ? TX[n](v) : null);
+      if (n === 'negocio') chip('negocio', v);
+      if (n === 'ciudad') chip('ciudad', v ? 'Ciudad: ' + v : '');
+    }
+  }
+  form.addEventListener('change', alCambiar);
+  form.addEventListener('input', function (e) { if (e.target && e.target.name) actualizarAvance(); });
+
   function limpiarErr() { document.querySelectorAll('[data-err]').forEach(function (e) { e.textContent = ''; }); }
   function validarPaso() {
     limpiarErr();
@@ -43,6 +96,13 @@
     $('#r-nivel').textContent = d.nivel; $('#r-nivel-txt').textContent = d.nivelTxt;
     var p = $('#r-perfil'); p.innerHTML = '';
     Object.keys(d.perfil).forEach(function (k) { var x = document.createElement('div'); x.innerHTML = '<dt>' + t(k) + '</dt><dd>' + t(d.perfil[k]) + '</dd>'; p.appendChild(x); });
+    var pl = d.plan;
+    if (pl && pl.items && pl.items.length) {
+      $('#r-plan-t').textContent = pl.titulo; $('#r-plan-c').textContent = pl.cierre;
+      var pe = $('#r-plan-l'); pe.innerHTML = '';
+      pl.items.forEach(function (x) { pe.appendChild(li('<b>' + t(x.t) + '</b><span>' + t(x.d) + '</span>')); });
+      $('#r-plan').hidden = false;
+    }
     var ul = $('#r-problemas'); ul.innerHTML = '';
     d.problemas.forEach(function (x) { ul.appendChild(li('<b>' + t(x.titulo) + '</b><span>' + t(x.detalle) + '</span>')); });
     [['#r-ganar', d.ganancia || []], ['#r-oport', d.oportunidades], ['#r-costo', d.costo], ['#r-sig', d.siguientes]].forEach(function (a) {
@@ -51,6 +111,8 @@
   }
   function irResultado() {
     $('#vista-form').hidden = true; $('#vista-resultado').hidden = false; window.scrollTo(0, 0);
+    var st = $('#sticky'); st.hidden = false;
+    if (window.IntersectionObserver) new IntersectionObserver(function (en) { st.hidden = en[0].isIntersecting; }).observe($('#cierre'));
   }
 
   $('#atras').addEventListener('click', function () { if (paso > 1) { paso--; mostrarPaso(); } });
@@ -58,9 +120,15 @@
     if (!validarPaso()) return;
     if (paso < TOTAL) { paso++; mostrarPaso(); window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' }); return; }
     var btn = this; btn.disabled = true; btn.textContent = 'Preparando su diagnóstico…';
+    var carga = $('#carga'), ct = $('#carga-t'), t0 = Date.now(), frases = ['Revisando sus respuestas…', 'Buscando lo que está frenando sus ventas…', 'Armando su plan a la medida…'], fi = 0, iv;
+    function cerrarCarga() { clearInterval(iv); carga.hidden = true; }
+    ct.textContent = frases[0]; carga.hidden = false;
+    iv = setInterval(function () { fi = Math.min(fi + 1, frases.length - 1); ct.textContent = frases[fi]; }, 700);
     try {
       var r = await fetch('/api/diagnostico', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos()) });
       var j = await r.json();
+      var resta = (reducir ? 0 : 1800) - (Date.now() - t0); if (r.ok && j.ok && resta > 0) await new Promise(function (ok) { setTimeout(ok, resta); });
+      cerrarCarga();
       if (!r.ok || !j.ok) {
         if (j.errores) {
           Object.keys(j.errores).forEach(function (k) { var e = $('[data-err="' + k + '"]'); if (e) e.textContent = j.errores[k]; });
@@ -74,6 +142,7 @@
       id = j.id; var dd = datos(); snap = { negocio: dd.negocio, contacto: dd.contacto, whatsapp: dd.whatsapp, ciudad: dd.ciudad };
       pintar(j.diagnostico); irResultado();
     } catch (e) {
+      cerrarCarga();
       $('#msg-form').textContent = 'Sin conexión o el servidor está despertando. Intente de nuevo en unos segundos.';
       btn.disabled = false; btn.textContent = 'Ver mi diagnóstico';
     }
@@ -97,5 +166,5 @@
       fp.hidden = true; $('#ok-prop').hidden = false;
     } catch (err) { m.textContent = 'Sin conexión. Intente de nuevo.'; b.disabled = false; b.textContent = 'Quiero mi propuesta'; }
   });
-  mostrarPaso();
+  mostrarPaso(); actualizarAvance();
 })();

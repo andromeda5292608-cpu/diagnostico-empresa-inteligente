@@ -34,6 +34,7 @@ const PROBLEMAS = {
   responder: 'No alcanzo a responder a todos a tiempo',
   recompra: 'Los clientes compran una vez y no vuelven',
   nosabe: 'No sé qué está funcionando y qué no',
+  margen: 'Vendo, pero me queda poco margen',
   desorden: 'Todo depende de mí y está desordenado',
 };
 const METAS = {
@@ -96,6 +97,7 @@ const APERTURA_PROBLEMA = {
   pocos: 'Hoy le llegan pocos clientes nuevos, y eso se siente en las ventas.',
   responder: 'Hoy se le escapan conversaciones porque no alcanza a responder a tiempo, y quien no contesta se queda sin la venta.',
   recompra: 'Hoy los clientes compran una vez y no vuelven, y eso es plata que ya había costado conseguir.',
+  margen: 'Hoy vende, pero le queda poco margen, y eso significa trabajar mucho para ganar menos de lo que merece.',
   nosabe: 'Hoy no tiene claro qué está funcionando y qué no, y así es difícil decidir en qué poner el tiempo y el dinero.',
   desorden: 'Hoy casi todo depende de usted y está desordenado, y el negocio no puede crecer más allá de las horas que usted le pone.',
 };
@@ -205,6 +207,12 @@ function diagnosticar(d) {
       detalle: 'Un cliente que ya compró es el más barato de volver a vender. Sin un recordatorio o seguimiento, depende de que se acuerden solos, y cada uno que no vuelve es una venta que ya había costado conseguir.',
     });
     oportunidades.push('Un seguimiento sencillo después de cada compra o servicio (mensaje de gracias, recordatorio, oferta para volver) para que esa relación deje más plata y no se enfríe.');
+  } else if (pp === 'margen') {
+    problemas.push({
+      titulo: 'Se vende, pero queda poco margen',
+      detalle: 'Usted lo señala como su problema principal. Suele pasar cuando conseguir cada cliente cuesta de más, cuando se vende sin ofertas pensadas, o cuando el cliente compra una sola vez y no vuelve.',
+    });
+    oportunidades.push('Atraer clientes con pauta medida para pagar solo por lo que funciona, armar ofertas combinadas y hacer seguimiento para que cada cliente compre más veces.');
   } else if (pp === 'nosabe') {
     problemas.push({
       titulo: 'No se mide qué funciona',
@@ -279,6 +287,27 @@ function diagnosticar(d) {
 
   const apertura = 'En Empresa Inteligente revisamos lo que nos contó de ' + d.negocio + '. ' + (APERTURA_PROBLEMA[pp] || 'Vimos con atención cómo está vendiendo hoy.') + ' Este diagnóstico es para que vea, con claridad, lo que está frenando su crecimiento y lo que un plan a la medida puede desbloquear: vender más, ahorrar tiempo, ganar más plata y tener más libertad.';
 
+  // Plan a la medida: soluciones elegidas por reglas, sin cifras ni promesas de resultados.
+  const items = [];
+  if (pp === 'pocos' || pp === 'margen' || d.canal !== 'pauta') {
+    items.push({ t: 'Contenido profesional con video IA y pauta en Meta', d: 'Para que más personas de su ciudad lo conozcan y le escriban, con un mensaje claro y una inversión que se mide.' });
+  }
+  items.push({ t: 'Embudo de ventas y seguimiento', d: 'Para que cada persona que le escribe reciba respuesta, y cada cliente que ya compró tenga una razón para volver.' });
+  if (pp === 'responder' || pp === 'desorden' || msg.min >= 21) {
+    items.push({ t: 'Automatización de lo repetido', d: 'Para que usted recupere tiempo. Si le sirve, se suma un asistente de WhatsApp que aprende del dueño: es una opción, no el centro del plan.' });
+  }
+  if (pp === 'nosabe' || d.pauta === 'sin-medir' || pp === 'margen') {
+    items.push({ t: 'Medición simple de lo que funciona', d: 'Para saber de dónde llega cada cliente y poner el dinero solo donde se vende.' });
+  }
+  if (pp === 'desorden' && items.length < 4) {
+    items.push({ t: 'Software a la medida', d: 'Para ordenar lo que hoy vive en su cabeza y en chats sueltos, y que el negocio funcione sin depender de usted para todo.' });
+  }
+  const plan = {
+    titulo: 'Le proponemos la mejor solución para que ' + d.negocio + ' crezca',
+    items: items.slice(0, 4),
+    cierre: 'La armamos a la medida de su negocio, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.',
+  };
+
   // Prioridades (siguientes pasos sin precios)
   const siguientes = [];
   if (problemas.length) siguientes.push('Empezar por lo que más le está costando ahora: ' + problemas[0].titulo.toLowerCase() + '.');
@@ -303,6 +332,7 @@ function diagnosticar(d) {
     problemas,
     oportunidades,
     ganancia,
+    plan,
     costo,
     siguientes,
   };

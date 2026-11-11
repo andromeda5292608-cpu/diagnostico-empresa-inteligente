@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/styles.css?v=3">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -34,7 +34,9 @@
   <div class="wrap">
     <form id="form" class="card" novalidate autocomplete="on">
       <div class="steps" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
-      <p class="paso" id="paso-txt">Paso 1 de 3 · Su negocio</p>
+      <p class="paso"><span id="paso-txt">Paso 1 de 3 · Su negocio</span><b id="prog-pct">0 %</b></p>
+      <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Avance de su diagnóstico"><i id="prog-bar"></i></div>
+      <div class="sabemos" id="sabemos" hidden><p>Lo que ya sabemos de su negocio</p><div id="chips"></div></div>
 
       <fieldset data-paso="1">
         <label>Nombre del negocio
@@ -98,6 +100,7 @@
             <option value="responder">No alcanzo a responder a todos a tiempo</option>
             <option value="recompra">Los clientes compran una vez y no vuelven</option>
             <option value="nosabe">No sé qué funciona y qué no</option>
+            <option value="margen">Me queda poco margen</option>
             <option value="desorden">Todo depende de mí y está desordenado</option>
           </select><small class="err" data-err="problema"></small></label>
         <label>Su meta de ventas
@@ -133,6 +136,13 @@
       <div class="nivel"><span class="etq">Nivel de su estrategia comercial</span><strong id="r-nivel"></strong><p id="r-nivel-txt"></p></div>
       <h3>Su situación según sus respuestas</h3>
       <dl id="r-perfil" class="perfil"></dl>
+      <section class="plan" id="r-plan" hidden>
+        <p class="kicker">Su plan a la medida</p>
+        <h3 id="r-plan-t"></h3>
+        <ol id="r-plan-l" class="plan-l"></ol>
+        <p class="plan-c" id="r-plan-c"></p>
+        <a class="btn no-print" href="#cierre" id="r-plan-cta">Quiero mi propuesta</a>
+      </section>
       <h3>Lo que está frenando sus ventas</h3>
       <ol id="r-problemas" class="lista"></ol>
       <h3>Lo que podría ganar con un plan a la medida</h3>
@@ -151,7 +161,7 @@
     </div>
 
     <section class="card cierre no-print" id="cierre">
-      <h2>¿Quiere ver su plan a la medida?</h2>
+      <h2>Le proponemos la mejor solución para que su negocio crezca</h2>
       <p>Este diagnóstico es el primer paso. En una <b>llamada corta</b> le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Sin compromiso. Elija cuándo le queda mejor.</p>
       <form id="form-prop" novalidate>
         <label>Día
@@ -178,8 +188,11 @@
   </div>
 </section>
 </main>
+<a class="btn sticky no-print" href="#cierre" id="sticky" hidden>Quiero mi propuesta</a>
+<div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/app.js"></script>
+<script src="/respuestas.js?v=3"></script>
+<script src="/app.js?v=3"></script>
 </body>
 </html>
