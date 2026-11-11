@@ -2,7 +2,7 @@
   'use strict';
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var form = $('#form'), paso = 1, TOTAL = 3, id = null, snap = null;
-  var titulos = ['Su negocio', 'Su contacto', 'Sus ventas'];
+  var titulos = ['Su negocio o profesión', 'Su contacto', 'Sus ventas'];
 
   function mostrarPaso() {
     document.querySelectorAll('fieldset[data-paso]').forEach(function (f) { f.hidden = +f.dataset.paso !== paso; });
@@ -16,6 +16,10 @@
   // --- Avance, "lo que ya sabemos" y micro-respuestas ---
   var REQ = ['negocio', 'tipo', 'ciudad', 'contacto', 'whatsapp', 'canal', 'mensajes', 'pauta', 'problema', 'meta'];
   var RM = (window.EI_RESP && window.EI_RESP.R) || {}, TX = (window.EI_RESP && window.EI_RESP.TEXTO) || {};
+  var RM_P = (window.EI_RESP && window.EI_RESP.R_PROF) || {}, TX_P = (window.EI_RESP && window.EI_RESP.TEXTO_PROF) || {};
+  function esProf() { return valor('tipo') === 'otro' && !!(window.EI_PROF && window.EI_PROF.esProfesional(valor('tipoOtro'))); }
+  function mapa(n) { return (esProf() && RM_P[n]) ? RM_P[n] : RM[n]; }
+  function textos() { return esProf() && TX_P.tipoOtro ? TX_P : TX; }
   var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var tokens = {};
   function valor(n) { var el = form.elements[n]; return el ? String(el.value || '').trim() : ''; }
@@ -47,6 +51,10 @@
       inp.value = '';
       quitarRespuesta('tipoOtro');
     }
+  }
+  function actualizarSabemos() {
+    var el = $('#sabemos-t');
+    if (el) el.textContent = esProf() ? 'Lo que ya sabemos de su práctica' : 'Lo que ya sabemos de su negocio';
   }
   function chip(n, texto) {
     var box = $('#chips'), c = box.querySelector('[data-c="' + n + '"]');
@@ -84,27 +92,31 @@
         var otro = valor('tipoOtro');
         if (otro) {
           quitarRespuesta('tipo');
-          responder('tipoOtro', TX.tipoOtro ? TX.tipoOtro(otro) : null);
-          chip('tipo', 'Otro: ' + otro);
+          responder('tipoOtro', textos().tipoOtro ? textos().tipoOtro(otro) : null);
+          chip('tipo', (esProf() ? 'Profesión: ' : 'Otro: ') + otro);
         } else {
           var c = RM.tipo && RM.tipo.otro;
-          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio tiene y lo armamos a su medida.' });
+          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio o profesión tiene y lo armamos a su medida.' });
           chip('tipo', '');
         }
+        actualizarSabemos();
         return;
       }
     }
     if (n === 'tipoOtro') {
       quitarRespuesta('tipo');
-      responder('tipoOtro', v && TX.tipoOtro ? TX.tipoOtro(v) : null);
-      chip('tipo', v ? 'Otro: ' + v : '');
+      responder('tipoOtro', v && textos().tipoOtro ? textos().tipoOtro(v) : null);
+      chip('tipo', v ? ((esProf() ? 'Profesión: ' : 'Otro: ') + v) : '');
+      actualizarSabemos();
       return;
     }
-    if (RM[n]) {
-      var c = RM[n][v];
+    var src = mapa(n);
+    if (src) {
+      var c = src[v];
       responder(n, c || null); chip(n, c ? c.chip : '');
-    } else if (TX[n]) {
-      responder(n, v ? TX[n](v) : null);
+    } else if (textos()[n] || TX[n]) {
+      var fn = textos()[n] || TX[n];
+      responder(n, v ? fn(v) : null);
       if (n === 'negocio') chip('negocio', v);
       if (n === 'ciudad') chip('ciudad', v ? 'Ciudad: ' + v : '');
     }
@@ -142,6 +154,14 @@
   function pintar(d) {
     $('#r-fecha').textContent = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
     $('#r-negocio').textContent = d.negocio + ' · ' + d.tipo + ' · ' + d.ciudad;
+    if (d.profesional) {
+      var h = $('#r-doc-h'); if (h) h.textContent = 'Diagnóstico de su práctica';
+      var ne = $('#r-nivel-etq'); if (ne) ne.textContent = 'Nivel de su estrategia para darse a conocer';
+      var ph = $('#r-prob-h'); if (ph) ph.textContent = 'Lo que está frenando el crecimiento de su práctica';
+      var ch = $('#cierre-h'); if (ch) ch.textContent = 'Le proponemos la mejor solución para que pueda extender sus servicios';
+      var cp = $('#cierre-p'); if (cp) cp.innerHTML = 'Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos para extender sus servicios, cómo trabajar su agenda y la inversión. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.';
+      var av = $('#r-aviso'); if (av) av.textContent = 'Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su profesión.';
+    }
     var ap = $('#r-apertura');
     if (ap) ap.textContent = d.apertura || '';
     $('#r-nivel').textContent = d.nivel; $('#r-nivel-txt').textContent = d.nivelTxt;
@@ -171,7 +191,7 @@
     if (!validarPaso()) return;
     if (paso < TOTAL) { paso++; mostrarPaso(); window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' }); return; }
     var btn = this; btn.disabled = true; btn.textContent = 'Preparando su diagnóstico…';
-    var carga = $('#carga'), ct = $('#carga-t'), t0 = Date.now(), frases = ['Revisando sus respuestas…', 'Buscando lo que está frenando sus ventas…', 'Armando su plan a la medida…'], fi = 0, iv;
+    var carga = $('#carga'), ct = $('#carga-t'), t0 = Date.now(), frases = esProf() ? ['Revisando sus respuestas…', 'Buscando lo que está frenando el crecimiento de su práctica…', 'Armando su plan a la medida…'] : ['Revisando sus respuestas…', 'Buscando lo que está frenando sus ventas…', 'Armando su plan a la medida…'], fi = 0, iv;
     function cerrarCarga() { clearInterval(iv); carga.hidden = true; }
     ct.textContent = frases[0]; carga.hidden = false;
     iv = setInterval(function () { fi = Math.min(fi + 1, frases.length - 1); ct.textContent = frases[fi]; }, 700);

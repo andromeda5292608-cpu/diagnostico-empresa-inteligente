@@ -4,7 +4,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { diagnosticar, etiquetaTipo, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS } = require('./diagnostico');
+const { diagnosticar, etiquetaTipo, esProfesional, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS } = require('./diagnostico');
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_CLAVE = process.env.ADMIN_CLAVE || '';
@@ -165,7 +165,9 @@ async function highlevel(reg, tag, nota, tarea) {
 function notaEnvio(r, diag) {
   return [
     'DIAGNÓSTICO WEB (' + r.fecha + ')',
-    'Negocio: ' + r.negocio, 'Tipo: ' + etiquetaTipo(r), 'Ciudad: ' + r.ciudad,
+    'Negocio: ' + r.negocio, 'Tipo: ' + etiquetaTipo(r),
+    ...(r.tipo === 'otro' && esProfesional(r.tipoOtro) ? ['Perfil: profesional independiente'] : []),
+    'Ciudad: ' + r.ciudad,
     'Contacto: ' + r.contacto, 'WhatsApp: ' + r.whatsapp, 'Instagram, Facebook o Google Maps: ' + (r.redes || 'no indicó'),
     'Cómo consigue clientes: ' + (CANALES[r.canal] || ''), 'Mensajes por día: ' + ((MENSAJES[r.mensajes] || {}).label || ''),
     'Pauta: ' + (PAUTA[r.pauta] || ''), 'Problema principal: ' + (PROBLEMAS[r.problema] || ''), 'Meta: ' + (METAS[r.meta] || ''),
@@ -202,10 +204,10 @@ function validar(b) {
     whatsapp: normalizarTel(b.whatsapp), redes: clip(b.redes, 500), canal: clip(b.canal, 20), mensajes: clip(b.mensajes, 10),
     pauta: clip(b.pauta, 20), problema: clip(b.problema, 20), meta: clip(b.meta, 20),
   };
-  if (d.negocio.length < 2) errores.negocio = 'Escriba el nombre del negocio.';
-  if (!TIPOS[d.tipo]) errores.tipo = 'Elija el tipo de negocio.';
+  if (d.negocio.length < 2) errores.negocio = 'Escriba el nombre del negocio o su nombre profesional.';
+  if (!TIPOS[d.tipo]) errores.tipo = 'Elija el tipo de negocio o profesión.';
   if (d.tipo === 'otro') {
-    if (d.tipoOtro.length < 2) errores.tipoOtro = 'Escriba qué tipo de negocio tiene.';
+    if (d.tipoOtro.length < 2) errores.tipoOtro = 'Escriba qué tipo de negocio o profesión tiene.';
   } else {
     d.tipoOtro = '';
   }

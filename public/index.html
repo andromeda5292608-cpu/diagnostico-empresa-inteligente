@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=5">
+<link rel="stylesheet" href="/styles.css?v=6">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -36,13 +36,13 @@
       <div class="steps" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
       <p class="paso"><span id="paso-txt">Paso 1 de 3 · Su negocio</span><b id="prog-pct">0 %</b></p>
       <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Avance de su diagnóstico"><i id="prog-bar"></i></div>
-      <div class="sabemos" id="sabemos" hidden><p>Lo que ya sabemos de su negocio</p><div id="chips"></div></div>
+      <div class="sabemos" id="sabemos" hidden><p id="sabemos-t">Lo que ya sabemos de su negocio</p><div id="chips"></div></div>
 
       <fieldset data-paso="1">
-        <label>Nombre del negocio
-          <input name="negocio" type="text" maxlength="80" autocomplete="organization" required>
+        <label>Nombre del negocio o su nombre profesional
+          <input name="negocio" type="text" maxlength="80" autocomplete="organization" placeholder="Ej.: Ferretería López o Dra. Ana Pérez" required>
           <small class="err" data-err="negocio"></small></label>
-        <label>Tipo de negocio
+        <label>Tipo de negocio o profesión
           <select name="tipo" required>
             <option value="">Elija una opción</option>
             <option value="estetica">Estética / salud</option>
@@ -51,8 +51,8 @@
             <option value="otro">Otro</option>
           </select><small class="err" data-err="tipo"></small></label>
         <label id="lab-tipo-otro" class="extra-campo" hidden>
-          ¿Qué tipo de negocio tiene?
-          <input name="tipoOtro" type="text" maxlength="80" placeholder="Ej.: ferretería, gimnasio, taller…" autocomplete="off">
+          ¿Qué tipo de negocio o profesión tiene?
+          <input name="tipoOtro" type="text" maxlength="80" placeholder="Ej.: psicóloga, abogado, ferretería…" autocomplete="off">
           <small class="err" data-err="tipoOtro"></small></label>
         <label>Ciudad o municipio
           <input name="ciudad" type="text" maxlength="60" autocomplete="address-level2" required>
@@ -135,10 +135,10 @@
     <article class="doc" id="doc">
       <div class="doc-head">
         <img src="/logo-ei.png" width="72" height="72" alt="Empresa Inteligente">
-        <div><p class="kicker" id="r-fecha"></p><h2>Diagnóstico de su negocio</h2><p class="neg" id="r-negocio"></p></div>
+        <div><p class="kicker" id="r-fecha"></p><h2 id="r-doc-h">Diagnóstico de su negocio</h2><p class="neg" id="r-negocio"></p></div>
       </div>
       <p class="apertura" id="r-apertura"></p>
-      <div class="nivel"><span class="etq">Nivel de su estrategia comercial</span><strong id="r-nivel"></strong><p id="r-nivel-txt"></p></div>
+      <div class="nivel"><span class="etq" id="r-nivel-etq">Nivel de su estrategia comercial</span><strong id="r-nivel"></strong><p id="r-nivel-txt"></p></div>
       <h3>Su situación según sus respuestas</h3>
       <dl id="r-perfil" class="perfil"></dl>
       <section class="plan" id="r-plan" hidden>
@@ -148,7 +148,7 @@
         <p class="plan-c" id="r-plan-c"></p>
         <a class="btn no-print" href="#cierre" id="r-plan-cta">Quiero mi propuesta por WhatsApp</a>
       </section>
-      <h3>Lo que está frenando sus ventas</h3>
+      <h3 id="r-prob-h">Lo que está frenando sus ventas</h3>
       <ol id="r-problemas" class="lista"></ol>
       <h3>Lo que podría ganar con un plan a la medida</h3>
       <ul id="r-ganar" class="lista pts2 ganar"></ul>
@@ -158,7 +158,7 @@
       <ul id="r-costo" class="lista pts2"></ul>
       <h3>El siguiente paso</h3>
       <ul id="r-sig" class="lista pts2"></ul>
-      <p class="aviso">Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su negocio.</p>
+      <p class="aviso" id="r-aviso">Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su negocio.</p>
     </article>
 
     <div class="acciones no-print">
@@ -166,8 +166,8 @@
     </div>
 
     <section class="card cierre no-print" id="cierre">
-      <h2>Le proponemos la mejor solución para que su negocio crezca</h2>
-      <p>Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.</p>
+      <h2 id="cierre-h">Le proponemos la mejor solución para que su negocio crezca</h2>
+      <p id="cierre-p">Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.</p>
       <form id="form-prop" novalidate>
         <label>Día
           <select name="dia" required>
@@ -198,7 +198,8 @@
 <div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/respuestas.js?v=5"></script>
-<script src="/app.js?v=5"></script>
+<script src="/profesional.js?v=6"></script>
+<script src="/respuestas.js?v=6"></script>
+<script src="/app.js?v=6"></script>
 </body>
 </html>
