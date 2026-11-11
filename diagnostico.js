@@ -31,11 +31,12 @@ const PAUTA = {
 };
 const PROBLEMAS = {
   pocos: 'Llegan pocos clientes nuevos',
-  responder: 'No alcanzo a responder a todos a tiempo',
+  responder: 'No alcanzo a responder a todos al mismo tiempo',
   recompra: 'Los clientes compran una vez y no vuelven',
   nosabe: 'No sé qué está funcionando y qué no',
   margen: 'Vendo, pero me queda poco margen',
   desorden: 'Todo depende de mí y está desordenado',
+  procesos: 'Me toca hacerlo todo y no alcanzo con todos los procesos',
 };
 const METAS = {
   poco: 'Vender un poco más (hasta un 20 %)',
@@ -100,6 +101,7 @@ const APERTURA_PROBLEMA = {
   margen: 'Hoy vende, pero le queda poco margen, y eso significa trabajar mucho para ganar menos de lo que merece.',
   nosabe: 'Hoy no tiene claro qué está funcionando y qué no, y así es difícil decidir en qué poner el tiempo y el dinero.',
   desorden: 'Hoy casi todo depende de usted y está desordenado, y el negocio no puede crecer más allá de las horas que usted le pone.',
+  procesos: 'Hoy le toca hacerlo todo y no alcanza con todos los procesos, y el negocio no puede crecer más allá de las horas que usted le pone.',
 };
 
 const META_GANANCIA = {
@@ -109,8 +111,16 @@ const META_GANANCIA = {
   sinmeta: 'Todavía no tiene una meta de ventas clara. En la propuesta la definimos juntos, con los números de su propio negocio, para que sepa hacia dónde vamos.',
 };
 
+function etiquetaTipo(d) {
+  const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
+  const otro = String(d.tipoOtro || '').trim();
+  if (tipo === 'otro' && otro) return 'Otro: ' + otro;
+  return TIPOS[tipo];
+}
+
 function diagnosticar(d) {
   const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
+  const tipoOtro = String(d.tipoOtro || '').trim();
   const redes = tieneRedes(d.redes);
   const msg = MENSAJES[d.mensajes] || MENSAJES['0-5'];
   const problemas = [];
@@ -224,6 +234,12 @@ function diagnosticar(d) {
       detalle: 'Cuando la atención, las ventas y el seguimiento dependen solo de usted, el negocio no puede crecer más allá de su tiempo, y usted se queda sin libertad.',
     });
     oportunidades.push('Dejar procesos claros y automáticos para que el negocio funcione también cuando usted no puede contestar, y así recuperar tiempo y libertad.');
+  } else if (pp === 'procesos') {
+    problemas.push({
+      titulo: 'Le toca hacerlo todo y no alcanza con los procesos',
+      detalle: 'Usted lo señala como su problema principal: atiende clientes, cierra caja, revisa inventario y además tiene que conseguir ventas. Cuando todo pasa por usted, el día no alcanza y el negocio no puede crecer más allá de sus horas.',
+    });
+    oportunidades.push('Un software con IA o un POS que automatice la contabilidad, la nómina, el cierre de caja y el inventario, más publicidad en redes y respuesta de mensajes, para que usted se concentre en lo que solo usted puede hacer.');
   } else if (pp === 'pocos') {
     problemas.push({
       titulo: 'Pocos clientes nuevos',
@@ -281,14 +297,21 @@ function diagnosticar(d) {
   ganancia.push('Vender más: que más personas de su zona lo conozcan, le escriban y le compren, con un mensaje claro y una pauta medida, si hace falta.');
   ganancia.push('Ahorrar tiempo y tener más libertad: que las preguntas repetidas y el seguimiento no dependan de que usted esté pegado al teléfono todo el día.');
   ganancia.push('Ganar más plata: menos ventas perdidas por demora o por desorden, y más clientes que vuelven.');
+  if (pp === 'procesos') {
+    ganancia.push('Recuperar tiempo: que la caja, la contabilidad, la nómina, el inventario y los mensajes repetidos no dependan de que usted los haga todos a mano, y que usted se quede en lo que solo usted puede hacer.');
+  }
   if (pp === 'responder' || pp === 'desorden' || msg.min >= 21) {
     ganancia.push('Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para atender lo frecuente y pasarle solo a quien está listo para comprar. Es una opción, no el centro del plan.');
   }
 
-  const apertura = 'En Empresa Inteligente revisamos lo que nos contó de ' + d.negocio + '. ' + (APERTURA_PROBLEMA[pp] || 'Vimos con atención cómo está vendiendo hoy.') + ' Este diagnóstico es para que vea, con claridad, lo que está frenando su crecimiento y lo que un plan a la medida puede desbloquear: vender más, ahorrar tiempo, ganar más plata y tener más libertad.';
+  const giro = (tipo === 'otro' && tipoOtro) ? (', un negocio de ' + tipoOtro) : '';
+  const apertura = 'En Empresa Inteligente revisamos lo que nos contó de ' + d.negocio + giro + '. ' + (APERTURA_PROBLEMA[pp] || 'Vimos con atención cómo está vendiendo hoy.') + ' Este diagnóstico es para que vea, con claridad, lo que está frenando su crecimiento y lo que un plan a la medida puede desbloquear: vender más, ahorrar tiempo, ganar más plata y tener más libertad.';
 
   // Plan a la medida: soluciones elegidas por reglas, sin cifras ni promesas de resultados.
   const items = [];
+  if (pp === 'procesos') {
+    items.push({ t: 'Software a la medida / POS con IA para automatizar caja, contabilidad y nómina', d: 'Para que el cierre de caja, la contabilidad, la nómina y el inventario no dependan de usted a mano, y sumar publicidad en redes y respuesta de mensajes, de modo que usted se concentre en lo que solo usted puede hacer.' });
+  }
   if (pp === 'pocos' || pp === 'margen' || d.canal !== 'pauta') {
     items.push({ t: 'Contenido profesional con video IA y pauta en Meta', d: 'Para que más personas de su ciudad lo conozcan y le escriban, con un mensaje claro y una inversión que se mide.' });
   }
@@ -317,7 +340,7 @@ function diagnosticar(d) {
   return {
     version: 2,
     negocio: d.negocio,
-    tipo: TIPOS[tipo],
+    tipo: etiquetaTipo(d),
     ciudad: d.ciudad,
     apertura,
     nivel,
@@ -338,4 +361,4 @@ function diagnosticar(d) {
   };
 }
 
-module.exports = { diagnosticar, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };
+module.exports = { diagnosticar, etiquetaTipo, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };

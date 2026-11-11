@@ -19,10 +19,34 @@
   var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var tokens = {};
   function valor(n) { var el = form.elements[n]; return el ? String(el.value || '').trim() : ''; }
+  function camposReq() {
+    var list = REQ.slice();
+    if (valor('tipo') === 'otro') list.push('tipoOtro');
+    return list;
+  }
   function actualizarAvance() {
-    var n = REQ.filter(function (k) { return valor(k); }).length, pct = Math.round(n * 100 / REQ.length);
+    var req = camposReq(), n = req.filter(function (k) { return valor(k); }).length, pct = Math.round(n * 100 / req.length);
     $('#prog-bar').style.width = pct + '%'; $('#prog-pct').textContent = pct + ' %';
     $('.prog').setAttribute('aria-valuenow', pct);
+  }
+  function mostrarTipoOtro(si) {
+    var lab = $('#lab-tipo-otro'), inp = form.elements.tipoOtro;
+    if (!lab || !inp) return;
+    if (si) {
+      var ya = !lab.hidden;
+      lab.hidden = false;
+      inp.required = true;
+      lab.classList.remove('entra');
+      void lab.offsetWidth;
+      if (!reducir) lab.classList.add('entra');
+      if (!ya) inp.focus();
+    } else {
+      lab.hidden = true;
+      lab.classList.remove('entra');
+      inp.required = false;
+      inp.value = '';
+      quitarRespuesta('tipoOtro');
+    }
   }
   function chip(n, texto) {
     var box = $('#chips'), c = box.querySelector('[data-c="' + n + '"]');
@@ -54,6 +78,28 @@
     var el = e.target, n = el.name; if (!n || n === 'sitio') return;
     actualizarAvance();
     var v = valor(n);
+    if (n === 'tipo') {
+      mostrarTipoOtro(v === 'otro');
+      if (v === 'otro') {
+        var otro = valor('tipoOtro');
+        if (otro) {
+          quitarRespuesta('tipo');
+          responder('tipoOtro', TX.tipoOtro ? TX.tipoOtro(otro) : null);
+          chip('tipo', 'Otro: ' + otro);
+        } else {
+          var c = RM.tipo && RM.tipo.otro;
+          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio tiene y lo armamos a su medida.' });
+          chip('tipo', '');
+        }
+        return;
+      }
+    }
+    if (n === 'tipoOtro') {
+      quitarRespuesta('tipo');
+      responder('tipoOtro', v && TX.tipoOtro ? TX.tipoOtro(v) : null);
+      chip('tipo', v ? 'Otro: ' + v : '');
+      return;
+    }
     if (RM[n]) {
       var c = RM[n][v];
       responder(n, c || null); chip(n, c ? c.chip : '');
@@ -64,7 +110,12 @@
     }
   }
   form.addEventListener('change', alCambiar);
-  form.addEventListener('input', function (e) { if (e.target && e.target.name) actualizarAvance(); });
+  form.addEventListener('input', function (e) {
+    if (!e.target || !e.target.name) return;
+    actualizarAvance();
+    var err = $('[data-err="' + e.target.name + '"]');
+    if (err && valor(e.target.name)) err.textContent = '';
+  });
 
   function limpiarErr() { document.querySelectorAll('[data-err]').forEach(function (e) { e.textContent = ''; }); }
   function validarPaso() {

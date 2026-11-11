@@ -116,6 +116,9 @@ input:focus,select:focus{outline:none;border-color:var(--az2);box-shadow:0 0 0 3
 .sticky{position:fixed;left:14px;right:14px;bottom:14px;z-index:20;box-shadow:0 8px 30px rgba(0,87,255,.5)}
 .sticky[hidden]{display:none}
 @media print{.sticky{display:none!important}}
+.extra-campo{margin-top:-4px}
+.extra-campo.entra{animation:slide .35s ease both}
+@media(prefers-reduced-motion:reduce){.extra-campo.entra{animation:none}}
 @media(prefers-reduced-motion:reduce){.reply,.chip.nuevo,.carga{animation:none}.dots span{animation:none;opacity:1}.prog i{transition:none}}
 @media print{.plan{background:#fff;color:#0b1220;border:1px solid #0057FF}.doc .plan h3{color:#0057FF}.plan-l li span,.plan-c{color:#1a2540}.plan .kicker{color:#0057FF}.plan-l li b{color:#0b1220}}
 @media(min-width:640px){.perfil{grid-template-columns:1fr 1fr}.doc{padding:34px}}

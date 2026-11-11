@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=3">
+<link rel="stylesheet" href="/styles.css?v=4">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -50,6 +50,10 @@
             <option value="restaurante">Restaurante / comida</option>
             <option value="otro">Otro</option>
           </select><small class="err" data-err="tipo"></small></label>
+        <label id="lab-tipo-otro" class="extra-campo" hidden>
+          ¿Qué tipo de negocio tiene?
+          <input name="tipoOtro" type="text" maxlength="80" placeholder="Ej.: ferretería, gimnasio, taller…" autocomplete="off">
+          <small class="err" data-err="tipoOtro"></small></label>
         <label>Ciudad o municipio
           <input name="ciudad" type="text" maxlength="60" autocomplete="address-level2" required>
           <small class="err" data-err="ciudad"></small></label>
@@ -97,11 +101,12 @@
           <select name="problema" required>
             <option value="">Elija una opción</option>
             <option value="pocos">Llegan pocos clientes nuevos</option>
-            <option value="responder">No alcanzo a responder a todos a tiempo</option>
+            <option value="responder">No alcanzo a responder a todos al mismo tiempo</option>
             <option value="recompra">Los clientes compran una vez y no vuelven</option>
             <option value="nosabe">No sé qué funciona y qué no</option>
             <option value="margen">Me queda poco margen</option>
             <option value="desorden">Todo depende de mí y está desordenado</option>
+            <option value="procesos">Me toca hacerlo todo y no alcanzo con todos los procesos</option>
           </select><small class="err" data-err="problema"></small></label>
         <label>Su meta de ventas
           <select name="meta" required>
@@ -192,7 +197,7 @@
 <div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/respuestas.js?v=3"></script>
-<script src="/app.js?v=3"></script>
+<script src="/respuestas.js?v=4"></script>
+<script src="/app.js?v=4"></script>
 </body>
 </html>
