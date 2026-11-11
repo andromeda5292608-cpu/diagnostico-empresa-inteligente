@@ -2,7 +2,7 @@
   'use strict';
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var form = $('#form'), paso = 1, TOTAL = 3, id = null, snap = null;
-  var titulos = ['Su negocio o profesión', 'Su contacto', 'Sus ventas'];
+  var titulos = ['Su negocio, emprendimiento o idea', 'Su contacto', 'Sus ventas'];
 
   function mostrarPaso() {
     document.querySelectorAll('fieldset[data-paso]').forEach(function (f) { f.hidden = +f.dataset.paso !== paso; });
@@ -17,9 +17,25 @@
   var REQ = ['negocio', 'tipo', 'ciudad', 'contacto', 'whatsapp', 'canal', 'mensajes', 'pauta', 'problema', 'meta'];
   var RM = (window.EI_RESP && window.EI_RESP.R) || {}, TX = (window.EI_RESP && window.EI_RESP.TEXTO) || {};
   var RM_P = (window.EI_RESP && window.EI_RESP.R_PROF) || {}, TX_P = (window.EI_RESP && window.EI_RESP.TEXTO_PROF) || {};
-  function esProf() { return valor('tipo') === 'otro' && !!(window.EI_PROF && window.EI_PROF.esProfesional(valor('tipoOtro'))); }
-  function mapa(n) { return (esProf() && RM_P[n]) ? RM_P[n] : RM[n]; }
-  function textos() { return esProf() && TX_P.tipoOtro ? TX_P : TX; }
+  var RM_E = (window.EI_RESP && window.EI_RESP.R_EMP) || {}, TX_E = (window.EI_RESP && window.EI_RESP.TEXTO_EMP) || {};
+  var RM_I = (window.EI_RESP && window.EI_RESP.R_IDEA) || {}, TX_I = (window.EI_RESP && window.EI_RESP.TEXTO_IDEA) || {};
+  function perfil() { return (valor('tipo') === 'otro' && window.EI_PROF && window.EI_PROF.perfilDe) ? (window.EI_PROF.perfilDe(valor('tipoOtro')) || '') : ''; }
+  function esProf() { return perfil() === 'profesional'; }
+  function prefijoTipo() { return (window.EI_PROF && window.EI_PROF.etiquetaPerfil) ? window.EI_PROF.etiquetaPerfil(valor('tipoOtro')) : 'Otro: '; }
+  function mapa(n) {
+    var p = perfil();
+    if (p === 'profesional' && RM_P[n]) return RM_P[n];
+    if (p === 'emprendedor' && RM_E[n]) return RM_E[n];
+    if (p === 'idea' && RM_I[n]) return RM_I[n];
+    return RM[n];
+  }
+  function textos() {
+    var p = perfil();
+    if (p === 'profesional' && TX_P.tipoOtro) return TX_P;
+    if (p === 'emprendedor' && TX_E.tipoOtro) return TX_E;
+    if (p === 'idea' && TX_I.tipoOtro) return TX_I;
+    return TX;
+  }
   var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var tokens = {};
   function valor(n) { var el = form.elements[n]; return el ? String(el.value || '').trim() : ''; }
@@ -54,7 +70,9 @@
   }
   function actualizarSabemos() {
     var el = $('#sabemos-t');
-    if (el) el.textContent = esProf() ? 'Lo que ya sabemos de su práctica' : 'Lo que ya sabemos de su negocio';
+    if (!el) return;
+    var p = perfil();
+    el.textContent = p === 'profesional' ? 'Lo que ya sabemos de su práctica' : p === 'emprendedor' ? 'Lo que ya sabemos de su emprendimiento' : p === 'idea' ? 'Lo que ya sabemos de su idea' : 'Lo que ya sabemos de su negocio';
   }
   function chip(n, texto) {
     var box = $('#chips'), c = box.querySelector('[data-c="' + n + '"]');
@@ -93,10 +111,10 @@
         if (otro) {
           quitarRespuesta('tipo');
           responder('tipoOtro', textos().tipoOtro ? textos().tipoOtro(otro) : null);
-          chip('tipo', (esProf() ? 'Profesión: ' : 'Otro: ') + otro);
+          chip('tipo', prefijoTipo() + otro);
         } else {
           var c = RM.tipo && RM.tipo.otro;
-          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio o profesión tiene y lo armamos a su medida.' });
+          responder('tipo', c || { say: 'Cuéntenos qué tipo de negocio, emprendimiento o idea tiene y lo armamos a su medida.' });
           chip('tipo', '');
         }
         actualizarSabemos();
@@ -106,7 +124,7 @@
     if (n === 'tipoOtro') {
       quitarRespuesta('tipo');
       responder('tipoOtro', v && textos().tipoOtro ? textos().tipoOtro(v) : null);
-      chip('tipo', v ? ((esProf() ? 'Profesión: ' : 'Otro: ') + v) : '');
+      chip('tipo', v ? (prefijoTipo() + v) : '');
       actualizarSabemos();
       return;
     }
@@ -154,13 +172,34 @@
   function pintar(d) {
     $('#r-fecha').textContent = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' });
     $('#r-negocio').textContent = d.negocio + ' · ' + d.tipo + ' · ' + d.ciudad;
-    if (d.profesional) {
-      var h = $('#r-doc-h'); if (h) h.textContent = 'Diagnóstico de su práctica';
-      var ne = $('#r-nivel-etq'); if (ne) ne.textContent = 'Nivel de su estrategia para darse a conocer';
-      var ph = $('#r-prob-h'); if (ph) ph.textContent = 'Lo que está frenando el crecimiento de su práctica';
-      var ch = $('#cierre-h'); if (ch) ch.textContent = 'Le proponemos la mejor solución para que pueda extender sus servicios';
-      var cp = $('#cierre-p'); if (cp) cp.innerHTML = 'Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos para extender sus servicios, cómo trabajar su agenda y la inversión. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.';
-      var av = $('#r-aviso'); if (av) av.textContent = 'Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su profesión.';
+    var pc = d.perfilCliente || (d.profesional ? 'profesional' : 'negocio');
+    var h = $('#r-doc-h'), ne = $('#r-nivel-etq'), ph = $('#r-prob-h'), ch = $('#cierre-h'), cp = $('#cierre-p'), av = $('#r-aviso');
+    var btnP = $('#btn-prop'), st = $('#sticky'), cta = $('#r-plan-cta');
+    if (pc === 'profesional') {
+      if (h) h.textContent = 'Diagnóstico de su práctica';
+      if (ne) ne.textContent = 'Nivel de su estrategia para darse a conocer';
+      if (ph) ph.textContent = 'Lo que está frenando el crecimiento de su práctica';
+      if (ch) ch.textContent = 'Le proponemos la mejor solución para que pueda extender sus servicios';
+      if (cp) cp.innerHTML = 'Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos para extender sus servicios, cómo trabajar su agenda y la inversión. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.';
+      if (av) av.textContent = 'Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su profesión.';
+    } else if (pc === 'emprendedor') {
+      if (h) h.textContent = 'Diagnóstico de su emprendimiento';
+      if (ne) ne.textContent = 'Nivel de su estrategia para darse a conocer';
+      if (ph) ph.textContent = 'Lo que está frenando su emprendimiento';
+      if (ch) ch.textContent = 'Le proponemos la mejor solución para que su emprendimiento crezca';
+      if (cp) cp.innerHTML = 'Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: cómo conseguir más clientes, llenar su agenda, crear su marca personal y organizarse para cobrar. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.';
+      if (av) av.textContent = 'Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su emprendimiento.';
+    } else if (pc === 'idea') {
+      if (h) h.textContent = 'Diagnóstico de su idea';
+      if (ne) ne.textContent = 'Nivel de preparación para arrancar';
+      if (ph) ph.textContent = 'Lo que puede frenar el arranque de su idea';
+      if (ch) ch.textContent = 'Le proponemos la mejor solución para que su idea arranque';
+      if (cp) cp.innerHTML = 'Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: cómo arrancar y validar su idea, conseguir sus primeros clientes y aparecer en internet. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.';
+      if (av) av.textContent = 'Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su idea.';
+      var txtIdea = 'Quiero mi propuesta para arrancar por WhatsApp';
+      if (btnP) btnP.textContent = txtIdea;
+      if (st) st.textContent = txtIdea;
+      if (cta) cta.textContent = txtIdea;
     }
     var ap = $('#r-apertura');
     if (ap) ap.textContent = d.apertura || '';
@@ -191,7 +230,7 @@
     if (!validarPaso()) return;
     if (paso < TOTAL) { paso++; mostrarPaso(); window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' }); return; }
     var btn = this; btn.disabled = true; btn.textContent = 'Preparando su diagnóstico…';
-    var carga = $('#carga'), ct = $('#carga-t'), t0 = Date.now(), frases = esProf() ? ['Revisando sus respuestas…', 'Buscando lo que está frenando el crecimiento de su práctica…', 'Armando su plan a la medida…'] : ['Revisando sus respuestas…', 'Buscando lo que está frenando sus ventas…', 'Armando su plan a la medida…'], fi = 0, iv;
+    var carga = $('#carga'), ct = $('#carga-t'), t0 = Date.now(), pf = perfil(), frases = pf === 'profesional' ? ['Revisando sus respuestas…', 'Buscando lo que está frenando el crecimiento de su práctica…', 'Armando su plan a la medida…'] : pf === 'emprendedor' ? ['Revisando sus respuestas…', 'Buscando lo que está frenando su emprendimiento…', 'Armando su plan a la medida…'] : pf === 'idea' ? ['Revisando sus respuestas…', 'Buscando cómo ayudarle a arrancar su idea…', 'Armando su plan a la medida…'] : ['Revisando sus respuestas…', 'Buscando lo que está frenando sus ventas…', 'Armando su plan a la medida…'], fi = 0, iv;
     function cerrarCarga() { clearInterval(iv); carga.hidden = true; }
     ct.textContent = frases[0]; carga.hidden = false;
     iv = setInterval(function () { fi = Math.min(fi + 1, frases.length - 1); ct.textContent = frases[fi]; }, 700);

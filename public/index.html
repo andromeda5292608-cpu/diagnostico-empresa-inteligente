@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=6">
+<link rel="stylesheet" href="/styles.css?v=7">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -39,20 +39,20 @@
       <div class="sabemos" id="sabemos" hidden><p id="sabemos-t">Lo que ya sabemos de su negocio</p><div id="chips"></div></div>
 
       <fieldset data-paso="1">
-        <label>Nombre del negocio o su nombre profesional
-          <input name="negocio" type="text" maxlength="80" autocomplete="organization" placeholder="Ej.: Ferretería López o Dra. Ana Pérez" required>
+        <label>Nombre del negocio, de su emprendimiento o de su idea
+          <input name="negocio" type="text" maxlength="80" autocomplete="organization" placeholder="Ej.: Ferretería López, Dra. Ana Pérez o mi idea" required>
           <small class="err" data-err="negocio"></small></label>
-        <label>Tipo de negocio o profesión
+        <label>Tipo de negocio, profesión o idea
           <select name="tipo" required>
             <option value="">Elija una opción</option>
             <option value="estetica">Estética / salud</option>
             <option value="celulares">Celulares / tecnología</option>
             <option value="restaurante">Restaurante / comida</option>
-            <option value="otro">Otro</option>
+            <option value="otro">Otro / emprendimiento / idea</option>
           </select><small class="err" data-err="tipo"></small></label>
         <label id="lab-tipo-otro" class="extra-campo" hidden>
-          ¿Qué tipo de negocio o profesión tiene?
-          <input name="tipoOtro" type="text" maxlength="80" placeholder="Ej.: psicóloga, abogado, ferretería…" autocomplete="off">
+          ¿Qué tipo de negocio, emprendimiento o idea tiene?
+          <input name="tipoOtro" type="text" maxlength="80" placeholder="Ej.: psicóloga, uñas a domicilio, tengo una idea…" autocomplete="off">
           <small class="err" data-err="tipoOtro"></small></label>
         <label>Ciudad o municipio
           <input name="ciudad" type="text" maxlength="60" autocomplete="address-level2" required>
@@ -198,8 +198,8 @@
 <div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/profesional.js?v=6"></script>
-<script src="/respuestas.js?v=6"></script>
-<script src="/app.js?v=6"></script>
+<script src="/profesional.js?v=7"></script>
+<script src="/respuestas.js?v=7"></script>
+<script src="/app.js?v=7"></script>
 </body>
 </html>

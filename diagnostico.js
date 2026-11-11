@@ -1,6 +1,13 @@
 'use strict';
 
-const { esProfesional, esSaludEtica } = require('./public/profesional');
+const { esProfesional, esSaludEtica, perfilDe, etiquetaPerfil, notaPerfil } = require('./public/profesional');
+
+function de(perfil, negocio, profesional, emprendedor, idea) {
+  if (perfil === 'profesional' && profesional != null) return profesional;
+  if (perfil === 'emprendedor' && emprendedor != null) return emprendedor;
+  if (perfil === 'idea' && idea != null) return idea;
+  return negocio;
+}
 
 // Diagnóstico preliminar por reglas. Determinista: mismas respuestas => mismo resultado.
 // Sin precios, sin cifras inventadas: solo se usan datos que el negocio escribió.
@@ -10,7 +17,7 @@ const TIPOS = {
   estetica: 'Estética / salud',
   celulares: 'Celulares / tecnología',
   restaurante: 'Restaurante / comida',
-  otro: 'Otro tipo de negocio',
+  otro: 'Otro / emprendimiento / idea',
 };
 const CANALES = {
   referidos: 'Recomendaciones y boca a boca',
@@ -102,6 +109,22 @@ const POR_TIPO = {
     ],
     problema: 'En una profesión independiente, quien no lo encuentra claro en internet o no logra agendar fácil se va con otro profesional, y esa consulta ya no vuelve.',
   },
+  emprendedor: {
+    ideas: [
+      'Crear su marca personal con contenido en video, para que la gente sepa quién es usted y qué hace, aunque todavía no tenga un local o un logo grande.',
+      'Pauta en Meta en su ciudad, para conseguir más clientes y llenar su agenda, en lugar de esperar a que lo encuentren solos.',
+      'Un orden simple para cobrar, agendar y dar seguimiento, para que el trabajo que ya hizo sí se convierta en plata y en clientes que vuelven.',
+    ],
+    problema: 'En un emprendimiento independiente, si la gente no entiende rápido quién es usted, qué hace y cómo pedirle el servicio, se va con otra persona, y esa agenda no se llena.',
+  },
+  idea: {
+    ideas: [
+      'Validar su idea con un mensaje claro y una presencia digital sencilla, para que deje de quedarse solo en la cabeza y se pueda probar con personas reales.',
+      'Contenido y una pauta pequeña en su zona, para conseguir sus primeros clientes y ver si la idea despierta interés de verdad.',
+      'Una página o un camino simple para que le escriban, y un orden básico para responderles, de modo que el arranque no se enrede.',
+    ],
+    problema: 'Cuando una idea aún no se ve en internet ni tiene una forma clara de conseguir los primeros clientes, se queda en el papel, y se atrasa el momento de arrancar.',
+  },
 };
 
 const APERTURA_PROBLEMA = {
@@ -138,17 +161,54 @@ const META_GANANCIA_PROF = {
   sinmeta: 'Todavía no tiene una meta clara. En la propuesta la definimos juntos, a partir de su propia práctica, para que sepa hacia dónde vamos.',
 };
 
+const APERTURA_PROBLEMA_EMP = {
+  pocos: 'Hoy le llegan pocos clientes nuevos, y eso se siente en su agenda y en lo que cobra.',
+  responder: 'Hoy se le escapan conversaciones porque no alcanza a responder a tiempo, y quien no recibe respuesta se va con otra persona.',
+  recompra: 'Hoy los clientes compran o agendan una vez y no vuelven, y eso es trabajo que ya había costado conseguir.',
+  margen: 'Hoy trabaja, pero le queda poco margen, y cuesta cobrar lo que su trabajo vale o se le va el tiempo en desorden.',
+  nosabe: 'Hoy no tiene claro qué está funcionando y qué no, y así es difícil decidir en qué poner el tiempo y el dinero.',
+  desorden: 'Hoy casi todo depende de usted y está desordenado: atender, cobrar y darse a conocer pasan por la misma persona.',
+  procesos: 'Hoy le toca hacerlo todo —atender, cobrar, agendar y conseguir clientes— y el día no alcanza.',
+};
+
+const META_GANANCIA_EMP = {
+  poco: 'Usted quiere conseguir un poco más de clientes. Un plan a la medida se arma para acercarlo a esa meta, con lo que su emprendimiento necesita exactamente, no con un paquete genérico.',
+  bastante: 'Usted quiere llenar bastante más su agenda. Un plan a la medida se concentra en atraer más clientes y en que cada uno le vuelva a escribir.',
+  duplicar: 'Usted quiere hacer crecer mucho su emprendimiento. Eso pide darse a conocer con una marca personal clara y un sistema para conseguir clientes de forma constante.',
+  sinmeta: 'Todavía no tiene una meta clara. En la propuesta la definimos juntos, a partir de su propio emprendimiento, para que sepa hacia dónde vamos.',
+};
+
+const APERTURA_PROBLEMA_IDEA = {
+  pocos: 'Hoy todavía no tiene una forma constante de conseguir sus primeros clientes, y la idea se queda sin una prueba real.',
+  responder: 'Si ya le escriben, esas conversaciones se pueden enfriar si no hay una forma clara de responder y dar el siguiente paso.',
+  recompra: 'Todavía está en el momento de conseguir las primeras personas; el plan empieza por validar y atraer, y luego por hacer que vuelvan.',
+  margen: 'Antes de preocuparse por el margen, hace falta validar la idea, fijar cómo cobrar y conseguir las primeras ventas.',
+  nosabe: 'Como la idea aún está arrancando, es normal no saber qué va a funcionar; por eso el primer paso es probar con claridad y medir.',
+  desorden: 'Al arrancar es fácil que todo quede en la cabeza y en chats sueltos; un orden simple ayuda a pasar de la idea a los primeros clientes.',
+  procesos: 'Todavía no hay procesos armados, y eso es normal al iniciar; el plan empieza por lo esencial para arrancar sin complicarse.',
+};
+
+const META_GANANCIA_IDEA = {
+  poco: 'Usted quiere dar los primeros pasos. Un plan a la medida se arma para validar su idea y conseguir sus primeros clientes, sin armar nada innecesario.',
+  bastante: 'Usted quiere ver su idea crecer con fuerza. Eso empieza por validarla, aparecer en internet y atraer a las primeras personas que sí le escriban o le compren.',
+  duplicar: 'Usted quiere un salto grande. Para una idea que está arrancando, el plan empieza por validar, tener presencia digital y conseguir los primeros clientes de forma constante.',
+  sinmeta: 'Todavía no tiene una meta clara, y en una idea que arranca es normal. En la propuesta la definimos juntos: qué validar primero y cómo conseguir las primeras personas.',
+};
+
 function etiquetaTipo(d) {
   const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
   const otro = String(d.tipoOtro || '').trim();
-  if (tipo === 'otro' && otro) return (esProfesional(otro) ? 'Profesión: ' : 'Otro: ') + otro;
+  if (tipo === 'otro' && otro) return etiquetaPerfil(otro) + otro;
   return TIPOS[tipo];
 }
 
 function diagnosticar(d) {
   const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
   const tipoOtro = String(d.tipoOtro || '').trim();
-  const prof = tipo === 'otro' && esProfesional(tipoOtro);
+  const perfil = tipo === 'otro' ? (perfilDe(tipoOtro) || '') : '';
+  const prof = perfil === 'profesional';
+  const emp = perfil === 'emprendedor';
+  const idea = perfil === 'idea';
   const salud = prof && esSaludEtica(tipoOtro);
   const redes = tieneRedes(d.redes);
   const msg = MENSAJES[d.mensajes] || MENSAJES['0-5'];
@@ -161,9 +221,12 @@ function diagnosticar(d) {
   if (redes.ninguna || nRedes === 0) {
     problemas.push({
       titulo: 'Presencia digital casi invisible',
-      detalle: prof
-        ? 'No indicó Instagram, Facebook, Google Maps ni página web. Hoy quien busca su servicio en internet no encuentra dónde confiar, y esa consulta se la lleva quien sí aparece.'
-        : 'No indicó Instagram, Facebook, Google Maps ni página web. Hoy un cliente nuevo que lo busca en internet no encuentra dónde confiar, y esa venta se la lleva quien sí aparece.',
+      detalle: de(perfil,
+        'No indicó Instagram, Facebook, Google Maps ni página web. Hoy un cliente nuevo que lo busca en internet no encuentra dónde confiar, y esa venta se la lleva quien sí aparece.',
+        'No indicó Instagram, Facebook, Google Maps ni página web. Hoy quien busca su servicio en internet no encuentra dónde confiar, y esa consulta se la lleva quien sí aparece.',
+        'No indicó Instagram, Facebook, Google Maps ni página web. Hoy un cliente nuevo que lo busca no encuentra su marca personal, y esa oportunidad se la lleva quien sí aparece.',
+        'No indicó Instagram, Facebook, Google Maps ni página web. Sin una presencia digital, su idea no se puede encontrar ni validar, y la primera conversación se la lleva quien sí aparece.'
+      ),
     });
   } else if (nRedes === 1) {
     problemas.push({
@@ -319,10 +382,13 @@ function diagnosticar(d) {
       : 'Un software con IA o un POS que automatice la contabilidad, la nómina, el cierre de caja y el inventario, más publicidad en redes y respuesta de mensajes, para que usted se concentre en lo que solo usted puede hacer.');
   } else if (pp === 'pocos') {
     problemas.push({
-      titulo: prof ? 'Pocas consultas nuevas' : 'Pocos clientes nuevos',
-      detalle: prof
-        ? 'Es el problema que usted señala como principal. Está ligado a cuánta gente lo conoce y a qué tan fácil es escribirle o agendar. Mientras eso no se ordene, su agenda sigue dependiendo de que alguien aparezca por casualidad.'
-        : 'Es el problema que usted señala como principal. Está ligado a cuánta gente conoce el negocio y a qué tan fácil es escribirle. Mientras eso no se ordene, las ventas siguen dependiendo de que alguien aparezca por casualidad.',
+      titulo: de(perfil, 'Pocos clientes nuevos', 'Pocas consultas nuevas', 'Pocos clientes nuevos', 'Todavía no hay primeros clientes constantes'),
+      detalle: de(perfil,
+        'Es el problema que usted señala como principal. Está ligado a cuánta gente conoce el negocio y a qué tan fácil es escribirle. Mientras eso no se ordene, las ventas siguen dependiendo de que alguien aparezca por casualidad.',
+        'Es el problema que usted señala como principal. Está ligado a cuánta gente lo conoce y a qué tan fácil es escribirle o agendar. Mientras eso no se ordene, su agenda sigue dependiendo de que alguien aparezca por casualidad.',
+        'Es el problema que usted señala como principal. Está ligado a cuánta gente conoce su emprendimiento y a qué tan fácil es pedirle el servicio. Mientras no tenga una marca personal visible y un canal para atraer, su agenda sigue dependiendo de que alguien aparezca por casualidad.',
+        'Es el punto que usted señala como principal. Para una idea que arranca, está ligado a que todavía no hay una presencia digital ni un camino claro para conseguir los primeros clientes.'
+      ),
     });
   }
 
@@ -346,20 +412,28 @@ function diagnosticar(d) {
   }
 
   // Específico por tipo
-  const t = POR_TIPO[prof ? 'profesional' : tipo];
-  problemas.push({ titulo: prof ? 'Lo que más pesa en su profesión' : 'Lo que más pesa en su sector', detalle: t.problema });
+  const t = POR_TIPO[perfil] || POR_TIPO[tipo];
+  problemas.push({ titulo: de(perfil, 'Lo que más pesa en su sector', 'Lo que más pesa en su profesión', 'Lo que más pesa en su emprendimiento', 'Lo que más pesa para arrancar su idea'), detalle: t.problema });
   t.ideas.forEach((i) => oportunidades.push(i));
 
   // Nivel
   const nivel = puntos <= 3 ? 'Inicial' : puntos <= 7 ? 'En desarrollo' : 'Sólido';
-  const nivelTxt = (prof ? {
-    Inicial: 'Su práctica tiene lo básico, pero todavía no tiene un sistema que atraiga pacientes o clientes de forma constante. Hay mucho espacio para extender sus servicios, ordenar su agenda, ahorrar tiempo y ganar más libertad, con un plan hecho a su medida.',
-    'En desarrollo': 'Su práctica ya tiene piezas importantes funcionando. Falta conectarlas y medirlas para que produzcan resultados constantes: más consultas, menos desgaste y más control de su tiempo.',
-    Sólido: 'Su práctica tiene una base buena. La oportunidad está en afinar, medir y extender lo que ya funciona, para atender más sin que todo dependa de que usted esté encima todo el día.',
-  } : {
+  const nivelTxt = de(perfil, {
     Inicial: 'Su negocio tiene lo básico, pero todavía no tiene un sistema que traiga clientes de forma constante. Hay mucho espacio para vender más, ahorrar tiempo y ganar más libertad, con un plan hecho a su medida.',
     'En desarrollo': 'Su negocio ya tiene piezas importantes funcionando. Falta conectarlas y medirlas para que produzcan resultados constantes: más ventas, menos desgaste y más control de su tiempo.',
     Sólido: 'Su negocio tiene una base comercial buena. La oportunidad está en afinar, medir y escalar lo que ya funciona, para vender más sin que todo dependa de que usted esté encima todo el día.',
+  }, {
+    Inicial: 'Su práctica tiene lo básico, pero todavía no tiene un sistema que atraiga pacientes o clientes de forma constante. Hay mucho espacio para extender sus servicios, ordenar su agenda, ahorrar tiempo y ganar más libertad, con un plan hecho a su medida.',
+    'En desarrollo': 'Su práctica ya tiene piezas importantes funcionando. Falta conectarlas y medirlas para que produzcan resultados constantes: más consultas, menos desgaste y más control de su tiempo.',
+    Sólido: 'Su práctica tiene una base buena. La oportunidad está en afinar, medir y extender lo que ya funciona, para atender más sin que todo dependa de que usted esté encima todo el día.',
+  }, {
+    Inicial: 'Su emprendimiento tiene lo básico, pero todavía le falta una marca personal visible y un sistema que le traiga clientes de forma constante. Hay mucho espacio para llenar su agenda, organizarse para cobrar y ganar más libertad, con un plan hecho a su medida.',
+    'En desarrollo': 'Su emprendimiento ya tiene piezas funcionando. Falta conectarlas: marca personal, captación de clientes y un orden para cobrar y atender.',
+    Sólido: 'Su emprendimiento ya tiene una base. La oportunidad está en afinar su marca personal, medir lo que trae clientes y organizarse para crecer sin que todo dependa de usted todo el día.',
+  }, {
+    Inicial: 'Su idea está en el punto de partida. Todavía no tiene un sistema para validarla ni para conseguir los primeros clientes. Hay un gran espacio para aparecer en internet y dar el primer paso, con un plan hecho a su medida.',
+    'En desarrollo': 'Su idea ya tiene algunas piezas. Falta conectar presencia digital, un mensaje claro y una forma de conseguir y atender a los primeros clientes.',
+    Sólido: 'Aunque parte de una idea, ya hay una base para darse a conocer. La oportunidad está en ordenar, medir y conseguir más de esos primeros clientes, con un plan a su medida.',
   })[nivel];
 
   // Costo de no actuar (cualitativo + aritmética con sus propios datos)
@@ -368,9 +442,12 @@ function diagnosticar(d) {
     costo.push('Con ' + msg.label.toLowerCase() + ', usted maneja al menos ' + (msg.min * 30) + ' conversaciones al mes. Cada una que se responde tarde tiene más probabilidad de terminar ' + (prof ? 'en otro profesional, y esa consulta ya no es suya.' : 'en la competencia, y esa venta ya no es suya.'));
   }
   if (d.pauta === 'no' || d.canal === 'referidos' || d.canal === 'local' || d.canal === 'irregular') {
-    costo.push(prof
-      ? 'Mientras no tenga un canal propio para atraer consultas, su crecimiento depende de que otros hablen de usted, y los meses flojos se sienten más duros.'
-      : 'Mientras no tenga un canal propio para atraer clientes, su crecimiento depende de que otros hablen de usted o pasen por la puerta, y los meses flojos se sienten más duros.');
+    costo.push(de(perfil,
+      'Mientras no tenga un canal propio para atraer clientes, su crecimiento depende de que otros hablen de usted o pasen por la puerta, y los meses flojos se sienten más duros.',
+      'Mientras no tenga un canal propio para atraer consultas, su crecimiento depende de que otros hablen de usted, y los meses flojos se sienten más duros.',
+      'Mientras no tenga un canal propio para conseguir clientes, su emprendimiento depende de que otros hablen de usted, y su agenda no se puede llenar a voluntad.',
+      'Mientras su idea no tenga un canal propio para darse a conocer, sigue dependiendo de que alguien se entere por casualidad, y se atrasa el arranque.'
+    ));
   }
   if (d.pauta === 'sin-medir' || d.problema === 'nosabe') {
     costo.push(prof
@@ -382,39 +459,63 @@ function diagnosticar(d) {
       ? 'Cada persona que no vuelve a agendar es una consulta que ya había costado conseguir y se pierde, mes tras mes.'
       : 'Cada cliente que no vuelve es una venta que ya había costado conseguir y se pierde, mes tras mes.');
   }
-  costo.push(prof
-    ? 'Otros profesionales que sí ordenan su atención y su presencia van quedándose con las consultas que hoy podrían ser suyas. Esa diferencia crece cada mes, y se siente en su agenda, en el tiempo que usted pierde y en la libertad que no alcanza a tener.'
-    : 'Sus competidores que sí ordenan su atención y su publicidad van quedándose con los clientes que hoy podrían ser suyos. Esa diferencia crece cada mes, y se siente en las ventas, en el tiempo que usted pierde y en la libertad que no alcanza a tener.');
+  costo.push(de(perfil,
+    'Sus competidores que sí ordenan su atención y su publicidad van quedándose con los clientes que hoy podrían ser suyos. Esa diferencia crece cada mes, y se siente en las ventas, en el tiempo que usted pierde y en la libertad que no alcanza a tener.',
+    'Otros profesionales que sí ordenan su atención y su presencia van quedándose con las consultas que hoy podrían ser suyas. Esa diferencia crece cada mes, y se siente en su agenda, en el tiempo que usted pierde y en la libertad que no alcanza a tener.',
+    'Otros emprendimientos que sí se dan a conocer y ordenan cómo cobrar y atender van quedándose con los clientes que hoy podrían ser suyos. Esa diferencia crece cada mes, y se siente en su agenda, en lo que deja de cobrar y en la libertad que no alcanza a tener.',
+    'Mientras la idea se queda en la cabeza, otras personas que sí se atreven a mostrarla y a buscar sus primeros clientes ocupan ese lugar. Cada mes sin un primer paso visible atrasa el arranque.'
+  ));
 
   // Lo que podría ganar con un plan a la medida
   const ganancia = [];
-  ganancia.push(prof ? (META_GANANCIA_PROF[d.meta] || META_GANANCIA_PROF.sinmeta) : (META_GANANCIA[d.meta] || META_GANANCIA.sinmeta));
+  const metaMap = de(perfil, META_GANANCIA, META_GANANCIA_PROF, META_GANANCIA_EMP, META_GANANCIA_IDEA);
+  ganancia.push(metaMap[d.meta] || metaMap.sinmeta);
   if (prof) {
     ganancia.push('Extender sus servicios: que más personas de su zona lo conozcan y le escriban a pedir una cita o una consulta, con un mensaje claro y una pauta medida, si hace falta.');
     ganancia.push('Ahorrar tiempo y tener más libertad: que las preguntas repetidas, la agenda y los recordatorios no dependan de que usted esté pegado al teléfono todo el día.');
     ganancia.push(salud
       ? 'Una agenda más estable: menos consultas perdidas por demora o por desorden, y un camino claro para que quien ya lo visitó vuelva a agendar cuando lo necesite.'
       : 'Una agenda más estable: menos consultas perdidas por demora o por desorden, y más pacientes o clientes que vuelven a agendar.');
+  } else if (emp) {
+    ganancia.push('Conseguir más clientes y una agenda más llena: que más personas de su zona lo conozcan, le escriban y le pidan el servicio.');
+    ganancia.push('Crear su marca personal: que se vea con claridad quién es usted y qué hace, aunque todavía no tenga un local o una marca grande.');
+    ganancia.push('Cobrar y organizarse: que el seguimiento, la agenda y el cobro no dependan de que usted lo recuerde todo a mano.');
+  } else if (idea) {
+    ganancia.push('Arrancar y validar su idea: pasar de lo que tiene en la cabeza a un primer paso concreto, con un mensaje claro.');
+    ganancia.push('Conseguir sus primeros clientes: que personas de su zona se enteren y le escriban.');
+    ganancia.push('Presencia digital: aparecer en internet de forma clara, para que su idea se pueda encontrar y probar.');
   } else {
     ganancia.push('Vender más: que más personas de su zona lo conozcan, le escriban y le compren, con un mensaje claro y una pauta medida, si hace falta.');
     ganancia.push('Ahorrar tiempo y tener más libertad: que las preguntas repetidas y el seguimiento no dependan de que usted esté pegado al teléfono todo el día.');
     ganancia.push('Ganar más plata: menos ventas perdidas por demora o por desorden, y más clientes que vuelven.');
   }
   if (pp === 'procesos') {
-    ganancia.push(prof
-      ? 'Recuperar tiempo: que la agenda, los recordatorios, la administración y los mensajes repetidos no dependan de que usted los haga todos a mano, y que usted se quede en atender.'
-      : 'Recuperar tiempo: que la caja, la contabilidad, la nómina, el inventario y los mensajes repetidos no dependan de que usted los haga todos a mano, y que usted se quede en lo que solo usted puede hacer.');
+    ganancia.push(de(perfil,
+      'Recuperar tiempo: que la caja, la contabilidad, la nómina, el inventario y los mensajes repetidos no dependan de que usted los haga todos a mano, y que usted se quede en lo que solo usted puede hacer.',
+      'Recuperar tiempo: que la agenda, los recordatorios, la administración y los mensajes repetidos no dependan de que usted los haga todos a mano, y que usted se quede en atender.',
+      'Recuperar tiempo: que cobrar, agendar y los mensajes repetidos no dependan de que usted lo haga todo a mano, y que usted se quede en atender y hacer crecer su emprendimiento.',
+      'Arrancar con un orden simple: lo esencial para responder, agendar y cobrar, sin armar procesos de más antes de validar la idea.'
+    ));
   }
   if (pp === 'responder' || pp === 'desorden' || msg.min >= 21) {
-    ganancia.push(prof
-      ? 'Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para atender lo frecuente y ayudarle a agendar, y pasarle solo a quien está listo para una cita. Es una opción, no el centro del plan.'
-      : 'Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para atender lo frecuente y pasarle solo a quien está listo para comprar. Es una opción, no el centro del plan.');
+    ganancia.push(de(perfil,
+      'Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para atender lo frecuente y pasarle solo a quien está listo para comprar. Es una opción, no el centro del plan.',
+      'Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para atender lo frecuente y ayudarle a agendar, y pasarle solo a quien está listo para una cita. Es una opción, no el centro del plan.',
+      'Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para responder, agendar y ayudarle a cobrar lo repetido. Es una opción, no el centro del plan.',
+      'Si le sirve, se puede sumar un asistente de WhatsApp que aprende de cómo responde usted, para atender las primeras conversaciones. Es una opción, no el centro del plan.'
+    ));
   }
 
-  const giro = (tipo === 'otro' && tipoOtro) ? (prof ? (', ' + tipoOtro) : (', un negocio de ' + tipoOtro)) : '';
-  const apertura = 'En Empresa Inteligente revisamos lo que nos contó de ' + d.negocio + giro + '. ' + ((prof ? APERTURA_PROBLEMA_PROF[pp] : APERTURA_PROBLEMA[pp]) || (prof ? 'Vimos con atención cómo está su práctica hoy.' : 'Vimos con atención cómo está vendiendo hoy.')) + (prof
-    ? ' Este diagnóstico es para que vea, con claridad, lo que está frenando el crecimiento de su práctica y lo que un plan a la medida puede desbloquear: extender sus servicios, ordenar su agenda, ahorrar tiempo y tener más libertad.'
-    : ' Este diagnóstico es para que vea, con claridad, lo que está frenando su crecimiento y lo que un plan a la medida puede desbloquear: vender más, ahorrar tiempo, ganar más plata y tener más libertad.');
+  const giro = (tipo === 'otro' && tipoOtro) ? de(perfil, (', un negocio de ' + tipoOtro), (', ' + tipoOtro), (', un emprendimiento de ' + tipoOtro), (', ' + tipoOtro)) : '';
+  const aperMap = de(perfil, APERTURA_PROBLEMA, APERTURA_PROBLEMA_PROF, APERTURA_PROBLEMA_EMP, APERTURA_PROBLEMA_IDEA);
+  const aperFallback = de(perfil, 'Vimos con atención cómo está vendiendo hoy.', 'Vimos con atención cómo está su práctica hoy.', 'Vimos con atención cómo está su emprendimiento hoy.', 'Vimos con atención cómo está su idea hoy.');
+  const aperCierre = de(perfil,
+    ' Este diagnóstico es para que vea, con claridad, lo que está frenando su crecimiento y lo que un plan a la medida puede desbloquear: vender más, ahorrar tiempo, ganar más plata y tener más libertad.',
+    ' Este diagnóstico es para que vea, con claridad, lo que está frenando el crecimiento de su práctica y lo que un plan a la medida puede desbloquear: extender sus servicios, ordenar su agenda, ahorrar tiempo y tener más libertad.',
+    ' Este diagnóstico es para que vea, con claridad, lo que está frenando su emprendimiento y lo que un plan a la medida puede desbloquear: más clientes, una agenda más llena, una marca personal que lo represente, y un orden para cobrar y organizarse.',
+    ' Este diagnóstico es para que vea, con claridad, cómo pasar de la idea a un primer paso concreto: validarla, aparecer en internet y conseguir sus primeros clientes.'
+  );
+  const apertura = 'En Empresa Inteligente revisamos lo que nos contó de ' + d.negocio + giro + '. ' + (aperMap[pp] || aperFallback) + aperCierre;
 
   // Plan a la medida: soluciones elegidas por reglas, sin cifras ni promesas de resultados.
   const items = [];
@@ -431,6 +532,20 @@ function diagnosticar(d) {
     }
     if ((pp === 'nosabe' || d.pauta === 'sin-medir' || pp === 'margen') && items.length < 4) {
       items.push({ t: 'Medición simple de lo que funciona', d: 'Para saber de dónde llega cada consulta y poner el dinero solo donde sí llena su agenda.' });
+    }
+  } else if (emp) {
+    items.push({ t: 'Marca personal y contenido con video IA', d: 'Para que la gente sepa quién es usted y qué hace, aunque todavía no tenga un local o un logo grande, y le escriban con más confianza.' });
+    items.push({ t: 'Pauta en Meta local para conseguir más clientes y llenar su agenda', d: 'Para dejar de esperar a que lo encuentren solos y probar qué mensaje trae clientes reales en su ciudad.' });
+    items.push({ t: 'Un orden para cobrar, agendar y dar seguimiento', d: 'Para que el trabajo que ya hizo sí se convierta en plata, la agenda no se desordene y el cliente tenga una razón para volver.' });
+    if (pp === 'responder' || pp === 'desorden' || pp === 'procesos' || msg.min >= 21 || items.length < 4) {
+      items.push({ t: 'Automatización de lo repetido', d: 'Para que usted recupere tiempo. Si le sirve, se suma un asistente de WhatsApp que aprende del dueño, para responder, agendar y ayudarle con lo repetido: es una opción, no el centro del plan.' });
+    }
+  } else if (idea) {
+    items.push({ t: 'Validar su idea con un mensaje claro y presencia digital', d: 'Para pasar de lo que tiene en la cabeza a algo que la gente pueda entender, encontrar y probar, sin armar de más.' });
+    items.push({ t: 'Contenido y una pauta pequeña para conseguir sus primeros clientes', d: 'Para que personas de su zona se enteren de su idea y le escriban, y usted vea si despierta interés de verdad.' });
+    items.push({ t: 'Una página o embudo simple para que le escriban', d: 'Para que cada persona interesada tenga un camino claro para contactarlo y dar el siguiente paso.' });
+    if (items.length < 4) {
+      items.push({ t: 'Un orden básico para responder', d: 'Para que las primeras conversaciones no se enfríen. Si le sirve, se suma un asistente de WhatsApp que aprende del dueño: es una opción, no el centro del plan.' });
     }
   } else {
     if (pp === 'procesos') {
@@ -451,23 +566,30 @@ function diagnosticar(d) {
     }
   }
   const plan = {
-    titulo: prof
-      ? 'Le proponemos la mejor solución para que ' + d.negocio + ' pueda extender sus servicios'
-      : 'Le proponemos la mejor solución para que ' + d.negocio + ' crezca',
+    titulo: de(perfil,
+      'Le proponemos la mejor solución para que ' + d.negocio + ' crezca',
+      'Le proponemos la mejor solución para que ' + d.negocio + ' pueda extender sus servicios',
+      'Le proponemos la mejor solución para que su emprendimiento crezca',
+      'Le proponemos la mejor solución para que su idea arranque'
+    ),
     items: items.slice(0, 4),
-    cierre: prof
-      ? (salud
-        ? 'La armamos a la medida de su profesión, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.'
-        : 'La armamos a la medida de su profesión, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.')
-      : 'La armamos a la medida de su negocio, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.',
+    cierre: de(perfil,
+      'La armamos a la medida de su negocio, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.',
+      'La armamos a la medida de su profesión, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.',
+      'La armamos a la medida de su emprendimiento, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.',
+      'La armamos a la medida de su idea, con una meta clara y sin compromiso. Pídala ahora y la revisamos juntos en una llamada corta.'
+    ),
   };
 
   // Prioridades (siguientes pasos sin precios)
   const siguientes = [];
   if (problemas.length) siguientes.push('Empezar por lo que más le está costando ahora: ' + problemas[0].titulo.toLowerCase() + '.');
-  siguientes.push(prof
-    ? 'En Empresa Inteligente le preparamos una propuesta corta, a la medida de ' + d.negocio + ': qué haríamos para extender sus servicios, cómo trabajar su agenda y la inversión.'
-    : 'En Empresa Inteligente le preparamos una propuesta corta, a la medida de ' + d.negocio + ': qué haríamos, la meta de ventas y la inversión.');
+  siguientes.push(de(perfil,
+    'En Empresa Inteligente le preparamos una propuesta corta, a la medida de ' + d.negocio + ': qué haríamos, la meta de ventas y la inversión.',
+    'En Empresa Inteligente le preparamos una propuesta corta, a la medida de ' + d.negocio + ': qué haríamos para extender sus servicios, cómo trabajar su agenda y la inversión.',
+    'En Empresa Inteligente le preparamos una propuesta corta, a la medida de su emprendimiento: cómo conseguir más clientes, crear su marca personal, organizarse para cobrar y la inversión.',
+    'En Empresa Inteligente le preparamos una propuesta corta, a la medida de su idea: cómo arrancar y validarla, conseguir los primeros clientes, aparecer en internet y la inversión.'
+  ));
   siguientes.push('El siguiente paso es una llamada, para explicársela y resolver sus dudas. Si quiere verla, pídala en esta misma página y elija el momento en que le queda bien.');
 
   return {
@@ -475,7 +597,8 @@ function diagnosticar(d) {
     negocio: d.negocio,
     tipo: etiquetaTipo(d),
     ciudad: d.ciudad,
-    profesional: !!prof,
+    profesional: prof,
+    perfilCliente: perfil || 'negocio',
     apertura,
     nivel,
     nivelTxt,
@@ -495,4 +618,4 @@ function diagnosticar(d) {
   };
 }
 
-module.exports = { diagnosticar, etiquetaTipo, esProfesional, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };
+module.exports = { diagnosticar, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };
