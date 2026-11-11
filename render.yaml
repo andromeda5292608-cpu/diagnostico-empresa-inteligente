@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: diagnostico-empresa-inteligente
+    runtime: node
+    plan: free
+    buildCommand: echo listo
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: ADMIN_CLAVE
+        sync: false

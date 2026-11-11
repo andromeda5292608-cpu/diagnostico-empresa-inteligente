@@ -1,0 +1,9 @@
+{
+  "name": "diagnostico-empresa-inteligente",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Página de diagnóstico gratis de Empresa Inteligente",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=20" }
+}
