@@ -87,3 +87,8 @@ fieldset[data-paso="1"] > label{margin-top:12px}
 .ayuda-prop{margin:10px 0 0;text-align:center;font-size:13px;color:var(--mut)}
 .ok:focus{outline:none}
 @media(prefers-reduced-motion:reduce){.carga,.btn.cta{animation:none}.dots span{animation:none;opacity:1}.prog i{transition:none}}
+.op input[type=checkbox]+span:before{border-radius:5px}
+legend .hint{display:block;font-size:13px;margin-top:4px}
+.ok p{margin:0}
+#ok-prop-wa{display:block;text-align:center;text-decoration:none;margin-top:12px}
+#ok-prop-wa[hidden]{display:none}

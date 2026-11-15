@@ -106,6 +106,44 @@ const APERTURA_PROBLEMA_IDEA = {
   procesos: 'Todavía no hay procesos armados, y eso es normal al iniciar; el plan empieza por lo esencial para arrancar sin complicarse.',
 };
 
+// Versión corta de cada problema, como cláusula: sirve para resumir varios en una frase
+// y para el mensaje prellenado de WhatsApp.
+const PROBLEMAS_CORTO = {
+  pocos: 'llegan pocos clientes nuevos',
+  responder: 'no alcanza a responder a todos a tiempo',
+  recompra: 'los clientes compran una vez y no vuelven',
+  nosabe: 'no tiene claro qué funciona y qué no',
+  margen: 'le queda poco margen',
+  desorden: 'todo depende de usted',
+  procesos: 'le toca hacerlo todo y no alcanza',
+};
+const PROBLEMAS_WA = {
+  pocos: 'llegan pocos clientes nuevos',
+  responder: 'no alcanzo a responder a todos a tiempo',
+  recompra: 'los clientes compran una vez y no vuelven',
+  nosabe: 'no sé qué funciona y qué no',
+  margen: 'me queda poco margen',
+  desorden: 'todo depende de mí',
+  procesos: 'me toca hacerlo todo y no alcanzo',
+};
+
+function unir(lista) {
+  if (lista.length <= 1) return lista.join('');
+  return lista.slice(0, -1).join(', ') + ' y ' + lista[lista.length - 1];
+}
+
+// Acepta `problemas_cod` o `problemas` (array, preferido) o `problema` (string o array, versión vieja).
+// Devuelve códigos válidos, sin repetir, en el orden de la lista.
+function codigosProblemas(d) {
+  const src = [];
+  [d && d.problemas_cod, d && d.problemas, d && d.problema].forEach((v) => {
+    if (Array.isArray(v)) src.push(...v);
+    else if (typeof v === 'string') src.push(...v.split(','));
+  });
+  const set = new Set(src.map((v) => String(v).trim()));
+  return Object.keys(PROBLEMAS).filter((k) => set.has(k));
+}
+
 function etiquetaTipo(d) {
   const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
   const otro = String(d.tipoOtro || '').trim();
@@ -116,10 +154,15 @@ function etiquetaTipo(d) {
 function diagnosticar(d) {
   const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
   const perfil = tipo === 'otro' ? (perfilDe(d.tipoOtro) || '') : '';
-  const problema = PROBLEMAS[d.problema] ? d.problema : 'pocos';
+  const codigos = codigosProblemas(d);
+  if (!codigos.length) codigos.push('pocos');
+  const problema = codigos[0];
   const negocio = String(d.negocio || '').trim() || 'su negocio';
 
-  const espejo = de(perfil, APERTURA_PROBLEMA, APERTURA_PROBLEMA_PROF, APERTURA_PROBLEMA_EMP, APERTURA_PROBLEMA_IDEA)[problema];
+  // Se espeja el primero completo; si eligió más, se resumen en una sola frase corta.
+  let espejo = de(perfil, APERTURA_PROBLEMA, APERTURA_PROBLEMA_PROF, APERTURA_PROBLEMA_EMP, APERTURA_PROBLEMA_IDEA)[problema];
+  const resto = codigos.slice(1).map((c) => PROBLEMAS_CORTO[c]);
+  if (resto.length) espejo += ' A eso se suma que ' + unir(resto) + '.';
   const porQue = POR_QUE[perfil || tipo];
   const propuesta = de(perfil,
     'Por eso le armamos una propuesta concreta para ' + negocio + ': qué haríamos, en qué orden y cuánto es la inversión, en una sola página. Mientras todo siga igual, esas ventas se las sigue llevando otro.',
@@ -143,8 +186,9 @@ function diagnosticar(d) {
     perfilCliente: perfil || 'negocio',
     titulo,
     lineas: [espejo, porQue, propuesta],
-    problemas: [PROBLEMAS[problema]],
+    codigos,
+    problemas: codigos.map((c) => PROBLEMAS[c]),
   };
 }
 
-module.exports = { diagnosticar, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };
+module.exports = { diagnosticar, codigosProblemas, unir, PROBLEMAS_CORTO, PROBLEMAS_WA, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };

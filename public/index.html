@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=9">
+<link rel="stylesheet" href="/styles.css?v=10">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -31,14 +31,14 @@
       <div class="prog" aria-hidden="true"><i id="prog-bar"></i></div>
 
       <fieldset data-paso="1">
-        <legend>¿Qué le frena hoy?</legend>
-        <div class="opciones" role="radiogroup" aria-label="Su principal problema hoy">
-          <label class="op"><input type="radio" name="problema" value="pocos" required><span>Llegan pocos clientes nuevos</span></label>
-          <label class="op"><input type="radio" name="problema" value="responder"><span>No alcanzo a responder a todos a tiempo</span></label>
-          <label class="op"><input type="radio" name="problema" value="recompra"><span>Los clientes compran una vez y no vuelven</span></label>
-          <label class="op"><input type="radio" name="problema" value="nosabe"><span>No sé qué funciona y qué no</span></label>
-          <label class="op"><input type="radio" name="problema" value="margen"><span>Vendo, pero me queda poco margen</span></label>
-          <label class="op"><input type="radio" name="problema" value="procesos"><span>Me toca hacerlo todo y no alcanzo</span></label>
+        <legend>¿Qué le frena hoy? <small class="hint">Puede elegir varias</small></legend>
+        <div class="opciones" role="group" aria-label="Lo que le frena hoy (puede elegir varias)">
+          <label class="op"><input type="checkbox" name="problema" value="pocos" required><span>Llegan pocos clientes nuevos</span></label>
+          <label class="op"><input type="checkbox" name="problema" value="responder"><span>No alcanzo a responder a todos a tiempo</span></label>
+          <label class="op"><input type="checkbox" name="problema" value="recompra"><span>Los clientes compran una vez y no vuelven</span></label>
+          <label class="op"><input type="checkbox" name="problema" value="nosabe"><span>No sé qué funciona y qué no</span></label>
+          <label class="op"><input type="checkbox" name="problema" value="margen"><span>Vendo, pero me queda poco margen</span></label>
+          <label class="op"><input type="checkbox" name="problema" value="procesos"><span>Me toca hacerlo todo y no alcanzo</span></label>
         </div>
         <small class="err" data-err="problema"></small>
         <label>Tipo de negocio
@@ -100,7 +100,10 @@
         <p class="ayuda-prop">Le llega un PDF de una página por WhatsApp y lo llamamos para explicársela. Gratis y sin compromiso.</p>
         <p class="msg" id="msg-prop" role="alert"></p>
       </form>
-      <p class="ok" id="ok-prop" hidden tabindex="-1">Listo. Ya tenemos su diagnóstico. Enseguida preparamos su propuesta de una página y se la enviamos por WhatsApp. Cuando la tenga abierta, le preguntamos si lo podemos llamar para explicársela.</p>
+      <div class="ok" id="ok-prop" hidden tabindex="-1">
+        <p id="ok-prop-t">Su solicitud quedó registrada; en breve le escribimos por WhatsApp.</p>
+        <a class="btn cta" id="ok-prop-wa" href="#" hidden>Abrir WhatsApp</a>
+      </div>
     </article>
   </div>
 </section>
@@ -108,6 +111,6 @@
 <div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/app.js?v=9"></script>
+<script src="/app.js?v=10"></script>
 </body>
 </html>

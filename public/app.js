@@ -7,7 +7,11 @@
   function valor(n) {
     var el = form.elements[n];
     if (!el) return '';
+    if (n === 'problema') return marcados().join(',');
     return String(el.value || '').trim(); // RadioNodeList.value devuelve la opción marcada
+  }
+  function marcados() {
+    return Array.prototype.map.call(form.querySelectorAll('input[name="problema"]:checked'), function (c) { return c.value; });
   }
   function mostrarPaso() {
     document.querySelectorAll('fieldset[data-paso]').forEach(function (f) { f.hidden = +f.dataset.paso !== paso; });
@@ -41,7 +45,7 @@
     document.querySelectorAll('fieldset[data-paso="' + paso + '"] [required]').forEach(function (el) {
       if (vistos[el.name]) return; vistos[el.name] = 1;
       var v = valor(el.name), err = $('[data-err="' + el.name + '"]'), m = '';
-      if (!v) m = el.type === 'radio' ? 'Elija la opción que más se parezca.' : el.tagName === 'SELECT' ? 'Elija una opción.' : 'Complete este campo.';
+      if (!v) m = el.type === 'checkbox' ? 'Elija al menos una opción.' : el.type === 'radio' ? 'Elija la opción que más se parezca.' : el.tagName === 'SELECT' ? 'Elija una opción.' : 'Complete este campo.';
       else if (el.name === 'whatsapp') {
         var d = v.replace(/\D/g, ''); if (d.length === 12 && d.indexOf('57') === 0) d = d.slice(2);
         if (!/^3\d{9}$/.test(d)) m = 'Escriba un WhatsApp válido de 10 dígitos (ej. 3001234567).';
@@ -51,7 +55,11 @@
     if (primero) primero.focus();
     return ok;
   }
-  function datos() { var o = {}; new FormData(form).forEach(function (v, k) { o[k] = v; }); return o; }
+  function datos() {
+    var o = {}; new FormData(form).forEach(function (v, k) { if (k !== 'problema') o[k] = v; });
+    o.problemas = marcados();
+    return o;
+  }
 
   function pintar(d) {
     $('#r-titulo').textContent = d.titulo || 'Lo que vemos en su negocio';
@@ -91,14 +99,14 @@
       if (!j.diagnostico) return fallo('No pudimos procesar su envío.');
       var resta = (reducir ? 0 : 900) - (Date.now() - t0); if (resta > 0) await new Promise(function (ok) { setTimeout(ok, resta); });
       carga.hidden = true;
-      id = j.id; var dd = datos(); snap = { negocio: dd.negocio, contacto: dd.contacto, whatsapp: dd.whatsapp, ciudad: dd.ciudad };
+      id = j.id; var dd = datos(); snap = { negocio: dd.negocio, contacto: dd.contacto, whatsapp: dd.whatsapp, ciudad: dd.ciudad, tipo: dd.tipo, tipoOtro: dd.tipoOtro, problemas: dd.problemas };
       pintar(j.diagnostico); irResultado();
     } catch (e) {
       fallo('Sin conexión o el servidor está despertando. Intente de nuevo en unos segundos.');
     }
   });
   form.addEventListener('submit', function (e) { e.preventDefault(); });
-  form.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'radio') { e.preventDefault(); $('#siguiente').click(); } });
+  form.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'radio' && e.target.type !== 'checkbox') { e.preventDefault(); $('#siguiente').click(); } });
 
   var fp = $('#form-prop');
   fp.addEventListener('submit', async function (e) {
@@ -111,7 +119,14 @@
       var r = await fetch('/api/propuesta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o) });
       var j = await r.json();
       if (!r.ok || !j.ok) { m.textContent = j.error || 'No pudimos enviar su solicitud.'; b.disabled = false; b.textContent = txt; return; }
-      fp.hidden = true; var ok = $('#ok-prop'); ok.hidden = false; ok.focus();
+      fp.hidden = true; var ok = $('#ok-prop'); ok.hidden = false;
+      if (j.whatsapp) {
+        // Ya quedó guardado; ahora se abre su WhatsApp con el mensaje listo (navegación directa, mejor en móvil).
+        $('#ok-prop-t').textContent = 'Listo. Le estamos abriendo WhatsApp con su mensaje; solo tiene que enviarlo.';
+        var a = $('#ok-prop-wa'); a.href = j.whatsapp; a.hidden = false;
+        window.location.href = j.whatsapp;
+      }
+      ok.focus();
     } catch (err) { m.textContent = 'Sin conexión. Intente de nuevo.'; b.disabled = false; b.textContent = txt; }
   });
   mostrarPaso();

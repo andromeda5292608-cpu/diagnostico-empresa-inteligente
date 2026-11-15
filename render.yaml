@@ -9,3 +9,5 @@ services:
     envVars:
       - key: ADMIN_CLAVE
         sync: false
+      - key: WHATSAPP_NEGOCIO
+        sync: false
