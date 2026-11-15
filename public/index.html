@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Diagnóstico gratis · Empresa Inteligente</title>
-<meta name="description" content="Diagnóstico gratis de Empresa Inteligente: sepa qué frena su negocio hoy y lo que un plan a la medida puede desbloquear. Responda unas preguntas y reciba su diagnóstico al instante.">
+<title>Propuesta a la medida para su negocio · Empresa Inteligente</title>
+<meta name="description" content="Empresa Inteligente: díganos qué le frena hoy y reciba por WhatsApp una propuesta de una página, a la medida de su negocio, con la inversión. Gratis y sin compromiso.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="/favicon.png">
 <link rel="preload" href="/fonts/Montserrat-ExtraBold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/styles.css?v=8">
+<link rel="stylesheet" href="/styles.css?v=9">
 </head>
 <body>
 <header class="top"><div class="wrap row">
@@ -20,28 +20,27 @@
 <!-- LANDING + FORM -->
 <section id="vista-form">
   <div class="hero"><div class="wrap">
-    <p class="kicker">Gratis · Toma 2 minutos</p>
-    <h1>Diagnóstico gratis: <span class="grad">lo que su negocio necesita para crecer</span></h1>
-    <p class="lead">En Empresa Inteligente hacemos un diagnóstico de lo que su negocio necesita exactamente para crecer. En dos minutos, con sus propias respuestas, va a ver qué le está frenando hoy, lo que está dejando de ganar y cómo un plan a la medida le puede ayudar a vender más, ahorrar tiempo, ganar más plata y tener más libertad.</p>
-    <a class="btn" href="#form" id="empezar">Empezar mi diagnóstico</a>
-    <ul class="pts">
-      <li>Sin costo y sin compromiso</li>
-      <li>Resultado al instante, listo para guardar en PDF</li>
-      <li>Hecho a partir de lo que usted nos cuenta</li>
-    </ul>
+    <p class="kicker">Gratis · 1 minuto</p>
+    <h1>Una propuesta <span class="grad">a la medida de su negocio</span></h1>
+    <p class="lead">Díganos qué le frena hoy. Le mostramos en segundos qué está pasando y le enviamos por WhatsApp una propuesta de una página, con la inversión.</p>
   </div></div>
 
   <div class="wrap">
     <form id="form" class="card" novalidate autocomplete="on">
-      <div class="steps" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
-      <p class="paso"><span id="paso-txt">Paso 1 de 3 · Su negocio</span><b id="prog-pct">0 %</b></p>
-      <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Avance de su diagnóstico"><i id="prog-bar"></i></div>
-      <div class="sabemos" id="sabemos" hidden><p id="sabemos-t">Lo que ya sabemos de su negocio</p><div id="chips"></div></div>
+      <p class="paso"><span id="paso-txt">Paso 1 de 2</span></p>
+      <div class="prog" aria-hidden="true"><i id="prog-bar"></i></div>
 
       <fieldset data-paso="1">
-        <label>Nombre del negocio
-          <input name="negocio" type="text" maxlength="80" autocomplete="organization" required>
-          <small class="err" data-err="negocio"></small></label>
+        <legend>¿Qué le frena hoy?</legend>
+        <div class="opciones" role="radiogroup" aria-label="Su principal problema hoy">
+          <label class="op"><input type="radio" name="problema" value="pocos" required><span>Llegan pocos clientes nuevos</span></label>
+          <label class="op"><input type="radio" name="problema" value="responder"><span>No alcanzo a responder a todos a tiempo</span></label>
+          <label class="op"><input type="radio" name="problema" value="recompra"><span>Los clientes compran una vez y no vuelven</span></label>
+          <label class="op"><input type="radio" name="problema" value="nosabe"><span>No sé qué funciona y qué no</span></label>
+          <label class="op"><input type="radio" name="problema" value="margen"><span>Vendo, pero me queda poco margen</span></label>
+          <label class="op"><input type="radio" name="problema" value="procesos"><span>Me toca hacerlo todo y no alcanzo</span></label>
+        </div>
+        <small class="err" data-err="problema"></small>
         <label>Tipo de negocio
           <select name="tipo" required>
             <option value="">Elija una opción</option>
@@ -55,68 +54,22 @@
           <input name="tipoOtro" type="text" maxlength="80" placeholder="Ej.: clínica, taller…" autocomplete="off">
           <small class="hint">También si es independiente, un emprendimiento o un proyecto.</small>
           <small class="err" data-err="tipoOtro"></small></label>
-        <label>Ciudad o municipio
-          <input name="ciudad" type="text" maxlength="60" autocomplete="address-level2" required>
-          <small class="err" data-err="ciudad"></small></label>
       </fieldset>
 
       <fieldset data-paso="2" hidden>
+        <legend>¿A dónde le enviamos su propuesta?</legend>
+        <label>Nombre del negocio
+          <input name="negocio" type="text" maxlength="80" autocomplete="organization" required>
+          <small class="err" data-err="negocio"></small></label>
+        <label>Ciudad o municipio
+          <input name="ciudad" type="text" maxlength="60" autocomplete="address-level2" required>
+          <small class="err" data-err="ciudad"></small></label>
         <label>Su nombre
           <input name="contacto" type="text" maxlength="80" autocomplete="name" required>
           <small class="err" data-err="contacto"></small></label>
-        <label>WhatsApp de contacto
+        <label>Su WhatsApp
           <input name="whatsapp" type="tel" inputmode="tel" maxlength="20" placeholder="3001234567" autocomplete="tel" required>
           <small class="err" data-err="whatsapp"></small></label>
-        <label>Instagram, Facebook o Google Maps <span class="opcional">(opcional)</span>
-          <input name="redes" type="text" inputmode="url" maxlength="500" placeholder="maps.app.goo.gl/…, @minegocio o facebook.com/minegocio">
-          <small class="hint">Si quiere, pegue el enlace de su ficha de Google Maps, de Instagram o de Facebook. Si no tiene, déjelo en blanco.</small></label>
-      </fieldset>
-
-      <fieldset data-paso="3" hidden>
-        <label>¿Cómo consigue clientes hoy?
-          <select name="canal" required>
-            <option value="">Elija una opción</option>
-            <option value="referidos">Recomendaciones y boca a boca</option>
-            <option value="redes">Redes sociales (publicaciones sin pauta)</option>
-            <option value="pauta">Anuncios pagados</option>
-            <option value="google">Google / Google Maps</option>
-            <option value="local">Gente que pasa por el local</option>
-            <option value="irregular">Casi no llegan clientes nuevos</option>
-          </select><small class="err" data-err="canal"></small></label>
-        <label>¿Cuántos mensajes recibe al día?
-          <select name="mensajes" required>
-            <option value="">Elija una opción</option>
-            <option value="0-5">Menos de 5</option>
-            <option value="6-20">Entre 6 y 20</option>
-            <option value="21-50">Entre 21 y 50</option>
-            <option value="50+">Más de 50</option>
-          </select><small class="err" data-err="mensajes"></small></label>
-        <label>¿Hace pauta (publicidad pagada)?
-          <select name="pauta" required>
-            <option value="">Elija una opción</option>
-            <option value="no">No</option>
-            <option value="sin-medir">Sí, pero no sé qué me deja</option>
-            <option value="midiendo">Sí, y mido los resultados</option>
-          </select><small class="err" data-err="pauta"></small></label>
-        <label>Su principal problema hoy
-          <select name="problema" required>
-            <option value="">Elija una opción</option>
-            <option value="pocos">Llegan pocos clientes nuevos</option>
-            <option value="responder">No alcanzo a responder a todos al mismo tiempo</option>
-            <option value="recompra">Los clientes compran una vez y no vuelven</option>
-            <option value="nosabe">No sé qué funciona y qué no</option>
-            <option value="margen">Me queda poco margen</option>
-            <option value="desorden">Todo depende de mí y está desordenado</option>
-            <option value="procesos">Me toca hacerlo todo y no alcanzo con todos los procesos</option>
-          </select><small class="err" data-err="problema"></small></label>
-        <label>Su meta de ventas
-          <select name="meta" required>
-            <option value="">Elija una opción</option>
-            <option value="poco">Vender un poco más (hasta un 20 %)</option>
-            <option value="bastante">Vender bastante más (30 a 50 %)</option>
-            <option value="duplicar">Duplicar las ventas</option>
-            <option value="sinmeta">Todavía no tengo una meta clara</option>
-          </select><small class="err" data-err="meta"></small></label>
       </fieldset>
 
       <div class="trampa" aria-hidden="true"><label>No llenar<input name="sitio" tabindex="-1" autocomplete="off"></label></div>
@@ -125,82 +78,36 @@
         <button type="button" class="btn sec" id="atras" hidden>Atrás</button>
         <button type="button" class="btn" id="siguiente">Siguiente</button>
       </div>
-      <p class="legal" id="legal" hidden>Al enviar acepta que Empresa Inteligente use estos datos para prepararle su diagnóstico y contactarlo. Ver <a href="https://empresa-inteligente.onrender.com/privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</p>
+      <p class="legal" id="legal" hidden>Al enviar acepta que Empresa Inteligente use estos datos para prepararle su propuesta y contactarlo. Ver <a href="https://empresa-inteligente.onrender.com/privacidad.html" target="_blank" rel="noopener">política de privacidad</a>.</p>
+      <p class="pts-linea">Sin costo y sin compromiso</p>
     </form>
   </div>
 </section>
 
-<!-- RESULTADO -->
+<!-- RESULTADO: enganche corto + propuesta -->
 <section id="vista-resultado" hidden>
   <div class="wrap">
-    <article class="doc" id="doc">
-      <div class="doc-head">
-        <img src="/logo-ei.png" width="72" height="72" alt="Empresa Inteligente">
-        <div><p class="kicker" id="r-fecha"></p><h2 id="r-doc-h">Diagnóstico de su negocio</h2><p class="neg" id="r-negocio"></p></div>
-      </div>
-      <p class="apertura" id="r-apertura"></p>
-      <div class="nivel"><span class="etq" id="r-nivel-etq">Nivel de su estrategia comercial</span><strong id="r-nivel"></strong><p id="r-nivel-txt"></p></div>
-      <h3>Su situación según sus respuestas</h3>
-      <dl id="r-perfil" class="perfil"></dl>
-      <section class="plan" id="r-plan" hidden>
-        <p class="kicker">Su plan a la medida</p>
-        <h3 id="r-plan-t"></h3>
-        <ol id="r-plan-l" class="plan-l"></ol>
-        <p class="plan-c" id="r-plan-c"></p>
-        <a class="btn no-print" href="#cierre" id="r-plan-cta">Quiero mi propuesta por WhatsApp</a>
-      </section>
-      <h3 id="r-prob-h">Lo que está frenando sus ventas</h3>
-      <ol id="r-problemas" class="lista"></ol>
-      <h3>Lo que podría ganar con un plan a la medida</h3>
-      <ul id="r-ganar" class="lista pts2 ganar"></ul>
-      <h3>Oportunidades que vemos</h3>
-      <ul id="r-oport" class="lista pts2"></ul>
-      <h3>El costo de seguir igual</h3>
-      <ul id="r-costo" class="lista pts2"></ul>
-      <h3>El siguiente paso</h3>
-      <ul id="r-sig" class="lista pts2"></ul>
-      <p class="aviso" id="r-aviso">Diagnóstico generado a partir de las respuestas del formulario. En la llamada le explicamos el análisis completo y una propuesta corta, a la medida de su negocio.</p>
-    </article>
+    <article class="card enganche" id="enganche">
+      <p class="kicker">Su diagnóstico rápido</p>
+      <h2 id="r-titulo">Lo que vemos en su negocio</h2>
+      <p class="linea espejo" id="r-l1"></p>
+      <p class="linea" id="r-l2"></p>
+      <p class="linea fuerte" id="r-l3"></p>
 
-    <div class="acciones no-print">
-      <button type="button" class="btn sec" id="imprimir">Descargar / imprimir PDF</button>
-    </div>
-
-    <section class="card cierre no-print" id="cierre">
-      <h2 id="cierre-h">Le proponemos la mejor solución para que su negocio crezca</h2>
-      <p id="cierre-p">Este diagnóstico es el primer paso. Le preparamos una propuesta concreta, fácil de revisar: qué haríamos en su negocio, la meta de ventas, la inversión y cómo avanzamos. Se la enviamos en <b>PDF por WhatsApp</b> y, en una <b>llamada corta</b>, se la explicamos. Sin compromiso. Elija cuándo le queda mejor.</p>
       <form id="form-prop" novalidate>
-        <label>Día
-          <select name="dia" required>
-            <option value="">Elija una opción</option>
-            <option value="lun-vie">Entre semana</option>
-            <option value="sabado">Sábado</option>
-          </select></label>
-        <label>Franja horaria (hora de Colombia)
-          <select name="franja" required>
-            <option value="">Elija una opción</option>
-            <option value="manana">Mañana (8:00 a 12:00)</option>
-            <option value="tarde">Tarde (12:00 a 18:00)</option>
-            <option value="noche">Noche (18:00 a 20:00)</option>
-          </select></label>
-        <label>Algo que quiera contarnos (opcional)
-          <input name="nota" type="text" maxlength="200"></label>
         <div class="trampa" aria-hidden="true"><label>No llenar<input name="sitio" tabindex="-1" autocomplete="off"></label></div>
+        <button type="submit" class="btn cta" id="btn-prop">Quiero mi propuesta por WhatsApp</button>
+        <p class="ayuda-prop">Le llega un PDF de una página por WhatsApp y lo llamamos para explicársela. Gratis y sin compromiso.</p>
         <p class="msg" id="msg-prop" role="alert"></p>
-        <button type="submit" class="btn" id="btn-prop">Quiero mi propuesta por WhatsApp</button>
-        <p class="hint ayuda-prop">Le enviamos su propuesta en PDF por WhatsApp y le llamamos para explicársela.</p>
       </form>
-      <p class="ok" id="ok-prop" hidden>Listo. Recibimos su solicitud. Le enviaremos su propuesta en PDF por WhatsApp y lo llamaremos en la franja que eligió para explicársela.</p>
-    </section>
+      <p class="ok" id="ok-prop" hidden tabindex="-1">Listo. Ya tenemos su diagnóstico. Enseguida preparamos su propuesta de una página y se la enviamos por WhatsApp. Cuando la tenga abierta, le preguntamos si lo podemos llamar para explicársela.</p>
+    </article>
   </div>
 </section>
 </main>
-<a class="btn sticky no-print" href="#cierre" id="sticky" hidden>Quiero mi propuesta por WhatsApp</a>
 <div class="carga" id="carga" hidden aria-live="polite"><div class="carga-in"><div class="dots"><span></span><span></span><span></span></div><p id="carga-t">Revisando sus respuestas…</p></div></div>
 
 <footer class="pie"><div class="wrap"><img src="/logo-ei.png" width="28" height="28" alt=""> Empresa Inteligente · Tecnología, automatización y soluciones</div></footer>
-<script src="/profesional.js?v=8"></script>
-<script src="/respuestas.js?v=8"></script>
-<script src="/app.js?v=8"></script>
+<script src="/app.js?v=9"></script>
 </body>
 </html>

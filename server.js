@@ -143,6 +143,10 @@ function proximaDue(diaKey, franjaKey, now = new Date()) {
   }
   return at(w.y, w.mo, w.d + 7, startH, 0);
 }
+// Sin franja elegida: la primera franja hábil (lun-vie, 8:00 a 20:00 Colombia) que venga.
+function proximaHabil(now = new Date()) {
+  return ['manana', 'tarde', 'noche'].map((f) => proximaDue('lun-vie', f, now)).sort((a, b) => a - b)[0];
+}
 // HighLevel es el registro permanente: contacto + etiqueta + nota con lo esencial.
 async function highlevel(reg, tag, nota, tarea) {
   if (!HL_API_KEY || !reg.whatsapp) return;
@@ -168,24 +172,21 @@ function notaEnvio(r, diag) {
     'Negocio: ' + r.negocio, 'Tipo: ' + etiquetaTipo(r),
     ...((r.tipo === 'otro' && notaPerfil(r.tipoOtro)) ? [notaPerfil(r.tipoOtro)] : []),
     'Ciudad: ' + r.ciudad,
-    'Contacto: ' + r.contacto, 'WhatsApp: ' + r.whatsapp, 'Instagram, Facebook o Google Maps: ' + (r.redes || 'no indicó'),
-    'Cómo consigue clientes: ' + (CANALES[r.canal] || ''), 'Mensajes por día: ' + ((MENSAJES[r.mensajes] || {}).label || ''),
-    'Pauta: ' + (PAUTA[r.pauta] || ''), 'Problema principal: ' + (PROBLEMAS[r.problema] || ''), 'Meta: ' + (METAS[r.meta] || ''),
-    'Nivel del diagnóstico: ' + diag.nivel,
-    'Problemas detectados: ' + diag.problemas.map((p) => p.titulo).join('; '),
+    'Contacto: ' + r.contacto, 'WhatsApp: ' + r.whatsapp,
+    'Problema principal: ' + (PROBLEMAS[r.problema] || ''),
+    'Enganche que vio: ' + (diag.lineas || []).join(' '),
   ].join('\n');
 }
 function notaPropuesta(r) {
-  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + '\nLlamada preferida: ' + r.dia + ', ' + r.franja + '\nPrefiere: propuesta PDF por WhatsApp + llamada' + (r.nota ? '\nNota del cliente: ' + r.nota : '');
+  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + (r.dia ? '\nLlamada preferida: ' + r.dia + ', ' + r.franja : '') + '\nPrefiere: propuesta PDF por WhatsApp + llamada' + (r.nota ? '\nNota del cliente: ' + r.nota : '');
 }
 function notaTarea(r) {
   const probs = Array.isArray(r.problemas) ? r.problemas.filter(Boolean).join('; ') : '';
   return [
     'Teléfono: +57 ' + (r.whatsapp || ''),
-    'Llamada preferida: ' + r.dia + ', ' + r.franja,
+    r.dia ? 'Llamada preferida: ' + r.dia + ', ' + r.franja : 'Enviar el PDF por WhatsApp y preguntar cuándo llamar',
     'Prefiere: propuesta PDF por WhatsApp + llamada',
-    'Nivel del diagnóstico: ' + (r.nivel || 'no disponible'),
-    'Problemas detectados: ' + (probs || 'no disponible'),
+    'Problema principal: ' + (probs || 'no disponible'),
     r.nota ? 'Nota del cliente: ' + r.nota : '',
   ].filter(Boolean).join('\n');
 }
@@ -214,11 +215,12 @@ function validar(b) {
   if (d.ciudad.length < 2) errores.ciudad = 'Escriba la ciudad o municipio.';
   if (d.contacto.length < 2) errores.contacto = 'Escriba el nombre de contacto.';
   if (!d.whatsapp) errores.whatsapp = 'Escriba un WhatsApp válido de 10 dígitos (ej. 3001234567).';
-  if (!CANALES[d.canal]) errores.canal = 'Elija una opción.';
-  if (!MENSAJES[d.mensajes]) errores.mensajes = 'Elija una opción.';
-  if (!PAUTA[d.pauta]) errores.pauta = 'Elija una opción.';
   if (!PROBLEMAS[d.problema]) errores.problema = 'Elija una opción.';
-  if (!METAS[d.meta]) errores.meta = 'Elija una opción.';
+  // Ya no se preguntan; si llegan (versión vieja en caché), se guardan solo si son válidos.
+  if (!CANALES[d.canal]) d.canal = '';
+  if (!MENSAJES[d.mensajes]) d.mensajes = '';
+  if (!PAUTA[d.pauta]) d.pauta = '';
+  if (!METAS[d.meta]) d.meta = '';
   return { d, errores };
 }
 const FRANJAS = { manana: 'Mañana (8:00 a 12:00)', tarde: 'Tarde (12:00 a 18:00)', noche: 'Noche (18:00 a 20:00)' };
@@ -232,7 +234,7 @@ async function apiDiagnostico(req, res) {
   const { d, errores } = validar(b);
   if (Object.keys(errores).length) return json(res, 422, { ok: false, errores });
   const diag = diagnosticar(d);
-  const reg = { tipo_registro: 'envio', id: crypto.randomBytes(6).toString('hex'), fecha: new Date().toISOString(), ...d, nivel: diag.nivel, problemas: diag.problemas.map((p) => p.titulo) };
+  const reg = { tipo_registro: 'envio', id: crypto.randomBytes(6).toString('hex'), fecha: new Date().toISOString(), ...d, problemas: diag.problemas };
   guardar(reg);
   notificar('Nuevo diagnóstico web: ' + reg.negocio + ' (' + reg.ciudad + ') - ' + reg.contacto + ' ' + reg.whatsapp);
   highlevel(reg, 'diagnostico-web', notaEnvio(reg, diag));
@@ -242,23 +244,24 @@ async function apiPropuesta(req, res) {
   if (limited(clientIp(req))) return json(res, 429, { ok: false, error: 'Demasiados envíos. Intente más tarde.' });
   let b; try { b = JSON.parse(await readBody(req)); } catch { return json(res, 400, { ok: false, error: 'Solicitud inválida.' }); }
   if (b.sitio) return json(res, 200, { ok: true });
-  const dia = DIAS[b.dia] ? b.dia : null; const franja = FRANJAS[b.franja] ? b.franja : null;
-  if (!dia || !franja) return json(res, 422, { ok: false, error: 'Elija el día y la franja para la llamada.' });
+  // Día y franja son opcionales: la llamada se acuerda por WhatsApp al enviar el PDF.
+  const dia = DIAS[b.dia] ? b.dia : null; const franja = dia && FRANJAS[b.franja] ? b.franja : null;
   const id = clip(b.id, 20);
   const previo = leer().find((r) => r.tipo_registro === 'envio' && r.id === id);
   const base = previo || { negocio: clip(b.negocio, 80), contacto: clip(b.contacto, 80), whatsapp: normalizarTel(b.whatsapp), ciudad: clip(b.ciudad, 60) };
   const reg = {
     tipo_registro: 'propuesta', id: crypto.randomBytes(6).toString('hex'), envio_id: id, fecha: new Date().toISOString(),
     negocio: base.negocio, contacto: base.contacto, whatsapp: base.whatsapp, ciudad: base.ciudad,
-    dia: DIAS[dia], franja: FRANJAS[franja], nota: clip(b.nota, 200),
-    nivel: base.nivel, problemas: Array.isArray(base.problemas) ? base.problemas : [],
+    dia: franja ? DIAS[dia] : '', franja: franja ? FRANJAS[franja] : '', nota: clip(b.nota, 200),
+    problemas: Array.isArray(base.problemas) ? base.problemas : [],
   };
+  if (!reg.whatsapp) return json(res, 422, { ok: false, error: 'No encontramos su WhatsApp. Vuelva a llenar el formulario, por favor.' });
   guardar(reg);
-  notificar('QUIERE PROPUESTA: ' + reg.negocio + ' - ' + reg.contacto + ' ' + reg.whatsapp + ' - llamada ' + reg.dia + ', ' + reg.franja);
+  notificar('QUIERE PROPUESTA: ' + reg.negocio + ' - ' + reg.contacto + ' ' + reg.whatsapp + (franja ? ' - llamada ' + reg.dia + ', ' + reg.franja : ' - enviar PDF por WhatsApp'));
   highlevel(reg, 'quiere-propuesta', notaPropuesta(reg), {
     title: 'Llamar a ' + (reg.contacto || 'cliente') + ' (' + (reg.negocio || 'negocio') + ') – propuesta',
     body: notaTarea(reg),
-    dueDate: proximaDue(dia, franja).toISOString(),
+    dueDate: (franja ? proximaDue(dia, franja) : proximaHabil()).toISOString(),
   });
   json(res, 200, { ok: true });
 }
@@ -276,8 +279,8 @@ function adminHtml() {
   const envios = todos.filter((r) => r.tipo_registro === 'envio');
   const f = (iso) => new Date(iso).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' });
   const wa = (n) => (n ? '<a href="tel:+57' + esc(n) + '">' + esc(n) + '</a>' : '—');
-  const filaP = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.ciudad) + '</td><td><b>' + esc(r.dia) + ' · ' + esc(r.franja) + '</b>' + (r.nota ? '<br>' + esc(r.nota) : '') + '</td></tr>';
-  const filaE = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(etiquetaTipo(r)) + '</td><td>' + esc(r.ciudad) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.redes) + '</td><td>' + esc(CANALES[r.canal] || '') + '</td><td>' + esc((MENSAJES[r.mensajes] || {}).label || '') + '</td><td>' + esc(PAUTA[r.pauta] || '') + '</td><td>' + esc(PROBLEMAS[r.problema] || '') + '</td><td>' + esc(METAS[r.meta] || '') + '</td><td>' + esc(r.nivel) + '</td></tr>';
+  const filaP = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.ciudad) + '</td><td><b>' + (r.dia ? esc(r.dia) + ' · ' + esc(r.franja) : 'Acordar por WhatsApp') + '</b>' + (r.nota ? '<br>' + esc(r.nota) : '') + '</td></tr>';
+  const filaE = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(etiquetaTipo(r)) + '</td><td>' + esc(r.ciudad) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.redes) + '</td><td>' + esc(CANALES[r.canal] || '') + '</td><td>' + esc((MENSAJES[r.mensajes] || {}).label || '') + '</td><td>' + esc(PAUTA[r.pauta] || '') + '</td><td>' + esc(PROBLEMAS[r.problema] || '') + '</td><td>' + esc(METAS[r.meta] || '') + '</td><td>' + esc(r.nivel || '') + '</td></tr>';
   return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Admin · Diagnósticos</title><style>body{font:14px system-ui,sans-serif;background:#05070d;color:#fff;margin:0;padding:16px}h1{font-size:20px}h2{font-size:16px;color:#00C2FF;margin-top:28px}.w{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{border-bottom:1px solid #1e2a44;padding:6px 8px;text-align:left;vertical-align:top}th{color:#8fa6d6;font-weight:600}a{color:#00C2FF}.n{color:#8fa6d6}</style></head><body><h1>Diagnóstico gratis · Admin</h1><p class="n">' + envios.length + ' diagnósticos · ' + props.length + ' solicitudes de propuesta (hora de Colombia). En Render gratis estos datos pueden borrarse al reiniciar; cada registro también queda en los logs.</p><h2>Quieren propuesta (llamada)</h2><div class="w"><table><tr><th>Fecha</th><th>Negocio</th><th>Contacto</th><th>WhatsApp</th><th>Ciudad</th><th>Llamada preferida</th></tr>' + (props.map(filaP).join('') || '<tr><td colspan=6 class="n">Sin solicitudes todavía</td></tr>') + '</table></div><h2>Todos los diagnósticos</h2><div class="w"><table><tr><th>Fecha</th><th>Negocio</th><th>Tipo</th><th>Ciudad</th><th>Contacto</th><th>WhatsApp</th><th>Redes / Maps</th><th>Clientes hoy</th><th>Mensajes</th><th>Pauta</th><th>Problema</th><th>Meta</th><th>Nivel</th></tr>' + (envios.map(filaE).join('') || '<tr><td colspan=13 class="n">Sin envíos todavía</td></tr>') + '</table></div></body></html>';
 }
 
