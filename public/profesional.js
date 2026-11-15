@@ -18,11 +18,14 @@
     'manicur', 'pedicur', 'maquillaj', 'pestan', 'artesani', 'catalogo',
     'reposter', 'confeccion',
   ];
-  var EMP_RE = /\ba domicilio\b|\bsin marca\b|por mi cuenta|cuenta propia|\bunas\b|\bcejas\b/;
+  var EMP_RE = /\ba domicilio\b|\bsin marca\b|por mi cuenta|cuenta propia|\bunyas\b|\bcejas\b/;
 
   function normalizar(s) {
+    // «uñas» se marca como «unyas» antes de quitar tildes: si no, choca con «unas» (unas cosas).
     return String(s || '')
       .toLowerCase()
+      .normalize('NFC')
+      .replace(/(^|[^a-z0-9\u00e0-\u00ff])u\u00f1as(?![a-z0-9\u00e0-\u00ff])/g, '$1unyas')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, ' ')

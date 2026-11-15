@@ -4,7 +4,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { diagnosticar, codigosProblemas, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS } = require('./diagnostico');
+const { diagnosticar, nichoDe, nombreNicho, codigosProblemas, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS } = require('./diagnostico');
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_CLAVE = process.env.ADMIN_CLAVE || '';
@@ -178,6 +178,7 @@ function notaEnvio(r, diag) {
   return [
     'DIAGNÓSTICO WEB (' + r.fecha + ')',
     'Negocio: ' + r.negocio, 'Tipo: ' + etiquetaTipo(r),
+    'Nicho: ' + nombreNicho((diag.nicho || nichoDe(r)).id),
     ...((r.tipo === 'otro' && notaPerfil(r.tipoOtro)) ? [notaPerfil(r.tipoOtro)] : []),
     'Ciudad: ' + r.ciudad,
     'Contacto: ' + r.contacto, 'WhatsApp: ' + r.whatsapp,
@@ -192,9 +193,12 @@ function etiquetasProblemas(r) {
 }
 // Mensaje prellenado que el cliente le envía al negocio. Está pensado para que Andrés
 // lo copie tal cual en el Generador de Propuestas: orden arriba, datos abajo.
+// Tope de largo (texto decodificado): si se pasa, se recorta solo «Enganche mostrado».
+const LARGO_MENSAJE = 1600;
 function mensajeGenerador(r) {
   const diag = diagnosticar({ ...r, problemas_cod: r.problemas_cod });
-  return [
+  const l = diag.lineas || [];
+  const armar = (enganche) => [
     'Hola, quiero mi propuesta.',
     '',
     'Haz la propuesta de ' + (r.negocio || 'mi negocio'),
@@ -204,17 +208,26 @@ function mensajeGenerador(r) {
     'WhatsApp del cliente: +57 ' + (r.whatsapp || ''),
     'Ciudad: ' + (r.ciudad || ''),
     'Tipo de negocio: ' + etiquetaTipo(r),
+    'Nicho: ' + nombreNicho(diag.nicho && diag.nicho.id),
     'Problemas: ' + (etiquetasProblemas(r).join('; ') || 'no indicó'),
-    'Enganche mostrado: ' + (diag.lineas || []).join(' '),
+    'Enganche mostrado: ' + enganche,
     'Pedido: propuesta PDF por WhatsApp',
   ].join('\n');
+  let txt = armar(l.join(' '));
+  if (txt.length > LARGO_MENSAJE) txt = armar([l[0], l[2]].filter(Boolean).join(' '));
+  if (txt.length > LARGO_MENSAJE) {
+    const cabe = Math.max(0, LARGO_MENSAJE - armar('').length - 1);
+    const l1 = String(l[0] || '');
+    txt = armar(l1.length > cabe ? l1.slice(0, cabe).trimEnd() + '…' : l1);
+  }
+  return txt;
 }
 function enlaceWhatsApp(r) {
   if (!WHATSAPP_NEGOCIO) return '';
   return 'https://wa.me/' + WHATSAPP_NEGOCIO + '?text=' + encodeURIComponent(mensajeGenerador(r));
 }
 function notaPropuesta(r) {
-  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + (etiquetasProblemas(r).length ? '\nProblemas: ' + etiquetasProblemas(r).join('; ') : '') + (WHATSAPP_NEGOCIO ? '\nSe le abrió WhatsApp con un mensaje prellenado hacia el negocio; revisar el chat.' : '') + (r.dia ? '\nLlamada preferida: ' + r.dia + ', ' + r.franja : '') + '\nPrefiere: propuesta PDF por WhatsApp + llamada' + (r.nota ? '\nNota del cliente: ' + r.nota : '') + '\n\nPara el Generador de Propuestas (copiar desde «Haz la propuesta»):\n' + mensajeGenerador(r);
+  return 'QUIERE PROPUESTA (' + r.fecha + ')\nNegocio: ' + r.negocio + '\nNicho: ' + nombreNicho(nichoDe(r).id) + '\nContacto: ' + r.contacto + ' · WhatsApp ' + r.whatsapp + (etiquetasProblemas(r).length ? '\nProblemas: ' + etiquetasProblemas(r).join('; ') : '') + (WHATSAPP_NEGOCIO ? '\nSe le abrió WhatsApp con un mensaje prellenado hacia el negocio; revisar el chat.' : '') + (r.dia ? '\nLlamada preferida: ' + r.dia + ', ' + r.franja : '') + '\nPrefiere: propuesta PDF por WhatsApp + llamada' + (r.nota ? '\nNota del cliente: ' + r.nota : '') + '\n\nPara el Generador de Propuestas (copiar desde «Haz la propuesta»):\n' + mensajeGenerador(r);
 }
 function notaTarea(r) {
   const probs = Array.isArray(r.problemas) ? r.problemas.filter(Boolean).join('; ') : '';
@@ -273,7 +286,7 @@ async function apiDiagnostico(req, res) {
   const { d, errores } = validar(b);
   if (Object.keys(errores).length) return json(res, 422, { ok: false, errores });
   const diag = diagnosticar(d);
-  const reg = { tipo_registro: 'envio', id: crypto.randomBytes(6).toString('hex'), fecha: new Date().toISOString(), ...d, problemas: diag.problemas };
+  const reg = { tipo_registro: 'envio', id: crypto.randomBytes(6).toString('hex'), fecha: new Date().toISOString(), ...d, problemas: diag.problemas, nicho: diag.nicho.id };
   guardar(reg);
   notificar('Nuevo diagnóstico web: ' + reg.negocio + ' (' + reg.ciudad + ') - ' + reg.contacto + ' ' + reg.whatsapp);
   highlevel(reg, 'diagnostico-web', notaEnvio(reg, diag));
@@ -297,6 +310,8 @@ async function apiPropuesta(req, res) {
     problemas_cod: cods,
     problemas: Array.isArray(base.problemas) && base.problemas.length ? base.problemas : cods.map((c) => PROBLEMAS[c]),
   };
+  // Registros viejos o perdidos no traen nicho: se recalcula con lo que haya.
+  reg.nicho = nichoDe(base).id;
   if (!reg.whatsapp) return json(res, 422, { ok: false, error: 'No encontramos su WhatsApp. Vuelva a llenar el formulario, por favor.' });
   guardar(reg);
   notificar('QUIERE PROPUESTA: ' + reg.negocio + ' - ' + reg.contacto + ' ' + reg.whatsapp + (franja ? ' - llamada ' + reg.dia + ', ' + reg.franja : ' - enviar PDF por WhatsApp'));
@@ -323,8 +338,8 @@ function adminHtml() {
   const f = (iso) => new Date(iso).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' });
   const wa = (n) => (n ? '<a href="tel:+57' + esc(n) + '">' + esc(n) + '</a>' : '—');
   const filaP = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.ciudad) + '</td><td>' + etiquetasProblemas(r).map(esc).join('<br>') + '</td><td><b>' + (r.dia ? esc(r.dia) + ' · ' + esc(r.franja) : 'Acordar por WhatsApp') + '</b>' + (r.nota ? '<br>' + esc(r.nota) : '') + '</td></tr>';
-  const filaE = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(etiquetaTipo(r)) + '</td><td>' + esc(r.ciudad) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.redes) + '</td><td>' + esc(CANALES[r.canal] || '') + '</td><td>' + esc((MENSAJES[r.mensajes] || {}).label || '') + '</td><td>' + esc(PAUTA[r.pauta] || '') + '</td><td>' + etiquetasProblemas(r).map(esc).join('<br>') + '</td><td>' + esc(METAS[r.meta] || '') + '</td><td>' + esc(r.nivel || '') + '</td></tr>';
-  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Admin · Diagnósticos</title><style>body{font:14px system-ui,sans-serif;background:#05070d;color:#fff;margin:0;padding:16px}h1{font-size:20px}h2{font-size:16px;color:#00C2FF;margin-top:28px}.w{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{border-bottom:1px solid #1e2a44;padding:6px 8px;text-align:left;vertical-align:top}th{color:#8fa6d6;font-weight:600}a{color:#00C2FF}.n{color:#8fa6d6}</style></head><body><h1>Diagnóstico gratis · Admin</h1><p class="n">' + envios.length + ' diagnósticos · ' + props.length + ' solicitudes de propuesta (hora de Colombia). En Render gratis estos datos pueden borrarse al reiniciar; cada registro también queda en los logs.</p><h2>Quieren propuesta (llamada)</h2><div class="w"><table><tr><th>Fecha</th><th>Negocio</th><th>Contacto</th><th>WhatsApp</th><th>Ciudad</th><th>Problemas</th><th>Llamada preferida</th></tr>' + (props.map(filaP).join('') || '<tr><td colspan=7 class="n">Sin solicitudes todavía</td></tr>') + '</table></div><h2>Todos los diagnósticos</h2><div class="w"><table><tr><th>Fecha</th><th>Negocio</th><th>Tipo</th><th>Ciudad</th><th>Contacto</th><th>WhatsApp</th><th>Redes / Maps</th><th>Clientes hoy</th><th>Mensajes</th><th>Pauta</th><th>Problemas</th><th>Meta</th><th>Nivel</th></tr>' + (envios.map(filaE).join('') || '<tr><td colspan=13 class="n">Sin envíos todavía</td></tr>') + '</table></div></body></html>';
+  const filaE = (r) => '<tr><td>' + f(r.fecha) + '</td><td>' + esc(r.negocio) + '</td><td>' + esc(etiquetaTipo(r)) + '</td><td>' + esc(nombreNicho(nichoDe(r).id)) + '</td><td>' + esc(r.ciudad) + '</td><td>' + esc(r.contacto) + '</td><td>' + wa(r.whatsapp) + '</td><td>' + esc(r.redes) + '</td><td>' + esc(CANALES[r.canal] || '') + '</td><td>' + esc((MENSAJES[r.mensajes] || {}).label || '') + '</td><td>' + esc(PAUTA[r.pauta] || '') + '</td><td>' + etiquetasProblemas(r).map(esc).join('<br>') + '</td><td>' + esc(METAS[r.meta] || '') + '</td><td>' + esc(r.nivel || '') + '</td></tr>';
+  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Admin · Diagnósticos</title><style>body{font:14px system-ui,sans-serif;background:#05070d;color:#fff;margin:0;padding:16px}h1{font-size:20px}h2{font-size:16px;color:#00C2FF;margin-top:28px}.w{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{border-bottom:1px solid #1e2a44;padding:6px 8px;text-align:left;vertical-align:top}th{color:#8fa6d6;font-weight:600}a{color:#00C2FF}.n{color:#8fa6d6}</style></head><body><h1>Diagnóstico gratis · Admin</h1><p class="n">' + envios.length + ' diagnósticos · ' + props.length + ' solicitudes de propuesta (hora de Colombia). En Render gratis estos datos pueden borrarse al reiniciar; cada registro también queda en los logs.</p><h2>Quieren propuesta (llamada)</h2><div class="w"><table><tr><th>Fecha</th><th>Negocio</th><th>Contacto</th><th>WhatsApp</th><th>Ciudad</th><th>Problemas</th><th>Llamada preferida</th></tr>' + (props.map(filaP).join('') || '<tr><td colspan=7 class="n">Sin solicitudes todavía</td></tr>') + '</table></div><h2>Todos los diagnósticos</h2><div class="w"><table><tr><th>Fecha</th><th>Negocio</th><th>Tipo</th><th>Nicho</th><th>Ciudad</th><th>Contacto</th><th>WhatsApp</th><th>Redes / Maps</th><th>Clientes hoy</th><th>Mensajes</th><th>Pauta</th><th>Problemas</th><th>Meta</th><th>Nivel</th></tr>' + (envios.map(filaE).join('') || '<tr><td colspan=14 class="n">Sin envíos todavía</td></tr>') + '</table></div></body></html>';
 }
 
 // --- Estáticos ---
@@ -359,4 +374,6 @@ const server = http.createServer(async (req, res) => {
     send(res, 500, 'Error');
   }
 });
-server.listen(PORT, () => console.log('Diagnóstico gratis escuchando en ' + PORT + (ADMIN_CLAVE ? '' : ' (ADMIN_CLAVE no definida: /admin deshabilitado)')));
+if (require.main === module) server.listen(PORT, () => console.log('Diagnóstico gratis escuchando en ' + PORT + (ADMIN_CLAVE ? '' : ' (ADMIN_CLAVE no definida: /admin deshabilitado)')));
+
+module.exports = { server, mensajeGenerador, notaEnvio, notaPropuesta, validar, LARGO_MENSAJE };

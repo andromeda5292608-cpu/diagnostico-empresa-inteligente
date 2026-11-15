@@ -4,6 +4,6 @@
   "private": true,
   "description": "Página de diagnóstico gratis de Empresa Inteligente",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "scripts": { "start": "node server.js", "test": "node test/nichos.test.js" },
   "engines": { "node": ">=20" }
 }

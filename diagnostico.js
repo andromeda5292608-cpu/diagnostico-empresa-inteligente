@@ -1,6 +1,7 @@
 'use strict';
 
 const { esProfesional, perfilDe, etiquetaPerfil, notaPerfil } = require('./public/profesional');
+const nichos = require('./nichos');
 
 // Enganche corto: 3 líneas a partir de las respuestas, para llevar a pedir la propuesta.
 // Determinista, sin precios ni cifras inventadas. Habla Empresa Inteligente, de usted.
@@ -13,10 +14,27 @@ function de(perfil, negocio, profesional, emprendedor, idea) {
   return negocio;
 }
 
+// Opciones del selector «Tipo de negocio» (mismo orden que public/index.html).
+// El nicho por defecto de cada una está en nichos-datos.js (TIPO_NICHO).
+// estetica, celulares, restaurante y otro vienen de versiones anteriores: no cambiar sus values.
 const TIPOS = {
-  estetica: 'Estética / salud',
+  restaurante: 'Restaurante, bar o café',
+  domicilios: 'Panadería o comidas rápidas',
+  clinica: 'Clínica o consultorio médico',
+  odontologia: 'Odontología',
+  estetica: 'Estética, belleza o spa',
+  gimnasio: 'Gimnasio o deporte',
+  moda: 'Tienda de ropa o moda',
+  comercio: 'Tienda o ferretería',
   celulares: 'Celulares / tecnología',
-  restaurante: 'Restaurante / comida',
+  hotel: 'Hotel, hostal o turismo',
+  inmobiliaria: 'Inmobiliaria',
+  taller: 'Taller o servicio automotriz',
+  veterinaria: 'Veterinaria o mascotas',
+  educacion: 'Academia o educación',
+  servicios: 'Abogados, contadores o consultores',
+  construccion: 'Construcción o remodelación',
+  eventos: 'Eventos o catering',
   otro: 'Otro tipo de negocio',
 };
 const PROBLEMAS = {
@@ -144,6 +162,28 @@ function codigosProblemas(d) {
   return Object.keys(PROBLEMAS).filter((k) => set.has(k));
 }
 
+// Línea 1: el espejo del primer problema + «A eso se suma que …» con los demás.
+// Con más de 3 extras se resumen; nunca pasa de LARGO_ESPEJO (se quitan extras si hace falta).
+const LARGO_ESPEJO = 330;
+function armarEspejo(base, extras) {
+  for (let n = Math.min(3, extras.length); n >= 0; n--) {
+    const lista = extras.slice(0, n);
+    const quedan = extras.length > n;
+    let s = base;
+    if (lista.length) s += ' A eso se suma que ' + unir(lista) + (quedan ? ', entre otros temas' : '') + '.';
+    else if (quedan) s += ' Y hay otros temas que también vale la pena ordenar.';
+    if (s.length <= LARGO_ESPEJO) return s;
+  }
+  return base;
+}
+
+// Nicho del registro: el guardado si es válido; si no (registros viejos), se detecta.
+function nichoDe(d) {
+  if (d && d.nicho && nichos.NICHOS[d.nicho]) return { id: d.nicho, nombre: nichos.NICHOS[d.nicho].nombre };
+  const n = nichos.detectarNicho(d || {});
+  return { id: n.id, nombre: n.nombre };
+}
+
 function etiquetaTipo(d) {
   const tipo = TIPOS[d.tipo] ? d.tipo : 'otro';
   const otro = String(d.tipoOtro || '').trim();
@@ -158,18 +198,34 @@ function diagnosticar(d) {
   if (!codigos.length) codigos.push('pocos');
   const problema = codigos[0];
   const negocio = String(d.negocio || '').trim() || 'su negocio';
+  const nicho = nichoDe({ ...d, tipo });
+  const conNicho = nicho.id !== 'generico';
 
   // Se espeja el primero completo; si eligió más, se resumen en una sola frase corta.
-  let espejo = de(perfil, APERTURA_PROBLEMA, APERTURA_PROBLEMA_PROF, APERTURA_PROBLEMA_EMP, APERTURA_PROBLEMA_IDEA)[problema];
-  const resto = codigos.slice(1).map((c) => PROBLEMAS_CORTO[c]);
-  if (resto.length) espejo += ' A eso se suma que ' + unir(resto) + '.';
-  const porQue = POR_QUE[perfil || tipo];
-  const propuesta = de(perfil,
+  // Con nicho: su lenguaje manda, salvo en «idea», que conserva su espejo (aún no abre).
+  const espejoBase = conNicho && perfil !== 'idea'
+    ? nichos.espejo(nicho.id, problema)
+    : de(perfil, APERTURA_PROBLEMA, APERTURA_PROBLEMA_PROF, APERTURA_PROBLEMA_EMP, APERTURA_PROBLEMA_IDEA)[problema];
+  const extras = codigos.slice(1).map((c) => (conNicho ? nichos.corto(nicho.id, c, PROBLEMAS_CORTO) : PROBLEMAS_CORTO[c]));
+  const espejo = armarEspejo(espejoBase, extras);
+
+  let porQue = POR_QUE[perfil || tipo];
+  let propuesta = de(perfil,
     'Por eso le armamos una propuesta concreta para ' + negocio + ': qué haríamos, en qué orden y cuánto es la inversión, en una sola página. Mientras todo siga igual, esas ventas se las sigue llevando otro.',
     'Por eso le armamos una propuesta concreta para su práctica: qué haríamos para que más personas lo encuentren y agenden, en qué orden y cuánto es la inversión, en una sola página.',
     'Por eso le armamos una propuesta concreta para su emprendimiento: cómo conseguir más clientes, darse a conocer y cuánto es la inversión, en una sola página.',
     'Por eso le armamos una propuesta concreta para arrancar: qué validar primero, cómo conseguir sus primeros clientes y cuánto es la inversión, en una sola página.'
   );
+  if (conNicho) {
+    const n = nichos.NICHOS[nicho.id];
+    if (perfil === 'idea') {
+      porQue = nichos.porQueIdea(nicho.id); // la línea 3 «para arrancar» se conserva
+    } else {
+      porQue = n.porQue;
+      const para = de(perfil, negocio, 'su práctica', 'su emprendimiento');
+      propuesta = 'Por eso le armamos una propuesta concreta para ' + para + ', pensada para ' + n.cierre + ': qué haríamos, en qué orden y cuánto es la inversión, en una sola página.';
+    }
+  }
   const titulo = de(perfil,
     'Lo que vemos en ' + negocio,
     'Lo que vemos en su práctica',
@@ -186,9 +242,10 @@ function diagnosticar(d) {
     perfilCliente: perfil || 'negocio',
     titulo,
     lineas: [espejo, porQue, propuesta],
+    nicho,
     codigos,
     problemas: codigos.map((c) => PROBLEMAS[c]),
   };
 }
 
-module.exports = { diagnosticar, codigosProblemas, unir, PROBLEMAS_CORTO, PROBLEMAS_WA, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };
+module.exports = { diagnosticar, nichoDe, detectarNicho: nichos.detectarNicho, nombreNicho: nichos.nombreNicho, NICHOS: nichos.NICHOS, codigosProblemas, unir, PROBLEMAS_CORTO, PROBLEMAS_WA, etiquetaTipo, esProfesional, perfilDe, notaPerfil, TIPOS, CANALES, MENSAJES, PAUTA, PROBLEMAS, METAS };
